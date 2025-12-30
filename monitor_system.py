@@ -11,14 +11,23 @@ class SystemMonitor:
         self.interval = interval
         self.running = False
 
-        self.cpu_util_samples = []   # utylizacja CPU [%]
-        self.cpu_time_samples = []   # czas CPU [sek]
-        self.ram_samples = []        # zużycie RAM [MB]
-        self.gpu_samples = []        # obciążenie GPU [%]
+        self.cpu_util_samples = []   # CPU utilization [%]
+        self.cpu_time_samples = []   # CPU time [sec]
+        self.ram_samples = []        # RAM usage [MB]
+        self.gpu_samples = []        # GPU load [%]
 
-        # Inicjalizacja NVML
-        pynvml.nvmlInit()
-        self.handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+        # NVML initialization
+        self.gpu_supported = False
+        try:
+            pynvml.nvmlInit()
+            self.handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+            # Test if GPU utilization query is supported
+            util = pynvml.nvmlDeviceGetUtilizationRates(self.handle)
+            self.gpu_supported = True
+            print("GPU monitoring: enabled")
+        except Exception as e:
+            print(f"GPU monitoring: disabled ({e})")
+            self.handle = None
 
     def _find_process(self):
         for p in psutil.process_iter(['name']):
@@ -55,11 +64,12 @@ class SystemMonitor:
                     proc = None
 
             # --- GPU UTIL (NVML) ---
-            try:
-                util = pynvml.nvmlDeviceGetUtilizationRates(self.handle)
-                self.gpu_samples.append(util.gpu)
-            except:
-                pass
+            if self.gpu_supported and self.handle:
+                try:
+                    util = pynvml.nvmlDeviceGetUtilizationRates(self.handle)
+                    self.gpu_samples.append(util.gpu)
+                except:
+                    pass
 
             time.sleep(self.interval)
 
@@ -82,22 +92,22 @@ class SystemMonitor:
                 "ram_max_mb": 0
             }
 
-        # --- całkowity czas CPU procesu ---
+        # --- total CPU time of process ---
         cpu_time_sec = max(self.cpu_time_samples) - min(self.cpu_time_samples)
 
-        # --- czas renderu aproksymowany liczbą próbek ---
+        # --- render time approximated by number of samples ---
         render_duration = len(self.cpu_time_samples) * self.interval
 
-        # --- intensywność CPU ---
+        # --- CPU intensity ---
         cpu_intensity = cpu_time_sec / render_duration if render_duration > 0 else 0
 
-        # --- odchylenie standardowe utylizacji CPU ---
+        # --- CPU utilization standard deviation ---
         cpu_noise_std = statistics.stdev(self.cpu_util_samples) if len(self.cpu_util_samples) > 1 else 0
 
         return {
             "cpu_time_sec": cpu_time_sec,
             "cpu_intensity": cpu_intensity,
             "cpu_noise_std": cpu_noise_std,
-            "gpu_avg_percent": sum(self.gpu_samples) / len(self.gpu_samples),
+            "gpu_avg_percent": sum(self.gpu_samples) / len(self.gpu_samples) if self.gpu_samples else 0,
             "ram_max_mb": max(self.ram_samples) if self.ram_samples else 0
         }
