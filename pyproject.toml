@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blender_benchmark"
+version = "1.0.0"
+description = "Python script to test rendering engines in Blender"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Oliwia Milewska", email = "milewskaoliwia01@gmail.com"},
+]
+dependencies = [
+    "psutil>=5.9.0",
+    "pynvml>=11.5.0",
+    "scikit-image>=0.21.0",
+    "Pillow>=10.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "mypy>=0.950",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+blender-benchmark = "blender_benchmark.cli:main"

@@ -13,12 +13,12 @@ from quality_metrics import compute_psnr, compute_ssim
 
 
 def ensure_dirs():
-    os.makedirs("results", exist_ok=True)
-    os.makedirs("plots", exist_ok=True)
-    os.makedirs("renders", exist_ok=True)
+    os.makedirs("output/results", exist_ok=True)
+    os.makedirs("output/plots", exist_ok=True)
+    os.makedirs("data/renders", exist_ok=True)
 
 
-def append_csv(row, filename="results/results.csv"):
+def append_csv(row, filename="output/results/results.csv"):
     file_exists = os.path.isfile(filename)
 
     with open(filename, "a", newline="") as f:
@@ -35,7 +35,7 @@ def plot_metric(values, name, ylabel):
     plt.xlabel("Test index")
     plt.ylabel(ylabel)
     plt.grid(True)
-    plt.savefig(f"plots/{name}.png")
+    plt.savefig(f"output/plots/{name}.png")
     plt.close()
 
 
@@ -55,7 +55,7 @@ def run_benchmark(
     scene_name = os.path.splitext(os.path.basename(scene_path))[0]
     samples_str = str(samples) if samples else "default"
     output_filename = f"{scene_name}_{engine}_{device}_{samples_str}.png"
-    output_path = os.path.join("renders", output_filename)
+    output_path = os.path.join("data/renders", output_filename)
     output_path = os.path.abspath(output_path)
 
     print("\n=== Benchmark start ===")

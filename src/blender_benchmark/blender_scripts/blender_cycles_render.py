@@ -48,17 +48,3 @@ def main():
             bpy.context.scene.cycles.device = 'GPU'
             # Try to set compute device type
             bpy.context.preferences.addons['cycles'].preferences.compute_device_type = device if device != "GPU" else "CUDA"
-        print(f"Cycles device set to: {bpy.context.scene.cycles.device}")
-    
-    # Set output path and format
-    bpy.context.scene.render.filepath = output_path
-    bpy.context.scene.render.image_settings.file_format = 'PNG'
-    
-    # Render
-    print(f"Starting render with {samples} samples...")
-    bpy.ops.render.render(write_still=True)
-    
-    print(f"CYCLES render completed with {samples} samples, saved to: {output_path}")
-
-if __name__ == "__main__":
-    main()
