@@ -6,6 +6,7 @@ import os
 import csv
 import argparse
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 from monitor_system import SystemMonitor
 from monitor_vram import VRAMMonitor
@@ -16,6 +17,7 @@ def ensure_dirs():
     os.makedirs("output/results", exist_ok=True)
     os.makedirs("output/plots", exist_ok=True)
     os.makedirs("data/renders", exist_ok=True)
+    os.makedirs("results", exist_ok=True)
 
 
 def append_csv(row, filename="output/results/results.csv"):
@@ -81,10 +83,10 @@ def run_benchmark(
     
     # Use appropriate render script for the engine
     if engine == "CYCLES":
-        script_path = os.path.join(os.path.dirname(__file__), "blender_scripts", "blender_cycles_render.py")
+        script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", "blender_cycles_render.py")
         cmd.extend(["--python", script_path, "--", str(samples), output_path, "--cycles-device", device])
     elif engine == "EEVEE":
-        script_path = os.path.join(os.path.dirname(__file__), "blender_scripts", "blender_eevee_render.py")
+        script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", "blender_eevee_render.py")
         cmd.extend(["--python", script_path, "--", str(samples), output_path])
 
     print(f"Running command: {' '.join(cmd)}")
@@ -134,7 +136,9 @@ def run_benchmark(
     print(json.dumps(results, indent=4))
 
     # --- JSON save ---
-    with open("results/last_results.json", "w") as f:
+    current_date = datetime.now().strftime("%Y%m%d")
+    results_filename = f"results/_{current_date}_{engine}_{device}_{samples if samples else 'default'}.json"
+    with open(results_filename, "w") as f:
         json.dump(results, f, indent=4)
 
     # --- CSV save ---

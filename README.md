@@ -127,31 +127,40 @@ python run.py --config config/custom.yaml
 ```
 Blender_Benchmark/
 ├── benchmark.py                    # Main benchmark script
-├── run.py                          # CLI entry point
+├── benchmarkCli.py                 # CLI entry point
 ├── monitor_system.py               # CPU/GPU monitoring
 ├── monitor_vram.py                 # VRAM monitoring
 ├── quality_metrics.py              # Image quality metrics (PSNR, SSIM)
 │
 ├── data/
-│   ├── references/                 # Input: .blend files & reference images
+│   ├── references/
+│   │   └── ref/                    # Reference images for quality comparison
 │   └── renders/                    # Output: rendered images
 │
-├── output/                         # Generated results (git-ignored)
+├── output/                         # Generated results
 │   ├── results/                    # CSV and JSON data
 │   └── plots/                      # Generated plots
 │
-├── blender_scripts/
-│   ├── blender_cycles_render.py    # CYCLES render script
-│   └── blender_eevee_render.py     # EEVEE render script
+├── src/
+│   └── blender_benchmark/          # Package source
+│       ├── __init__.py
+│       ├── cli.py
+│       ├── monitor_system.py
+│       ├── monitor_vram.py
+│       ├── quality_metrics.py
+│       └── blender_scripts/
+│           ├── __init__.py
+│           ├── blender_cycles_render.py    # CYCLES render script
+│           └── blender_eevee_render.py     # EEVEE render script
 │
 ├── config/
-│   ├── example.yaml                # Example configuration
-│   └── [custom configs]
+│   └── example.yaml                # Example configuration
 │
-├── src/blender_benchmark/          # Package source (optional for imports)
 ├── tests/                          # Unit tests
+│   └── __init__.py
+│
 ├── requirements.txt                # Python dependencies
-├── setup.py                        # Package setup
+├── LICENSE                         # MIT License
 └── README.md                       # This file
 ```
 
