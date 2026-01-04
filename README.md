@@ -10,7 +10,7 @@ Python script to benchmark and test rendering engines in Blender. Measure perfor
 - 🖼️ **Quality Assessment**: PSNR and SSIM image quality comparison
 - 🔄 **Batch Testing**: Run benchmarks multiple times for reliable results
 - ⚙️ **Config Management**: YAML configuration files
-- 📈 **Data Export**: CSV and JSON result formats
+- 📈 **Data Export**: JSON result formats
 
 ## Requirements
 
@@ -55,7 +55,7 @@ python benchmark.py --scene data/references/lightsaber.blend \
 
 **Arguments:**
 - `--blender-path` - Path to Blender executable (default: `/home/User/Blender/blender-5.0.0-linux-x64/blender`)
-- `--scene` ⭐ - Path to .blend file (REQUIRED)
+- `--scene` - Path to .blend file (REQUIRED)
 - `--engine` - CYCLES or BLENDER_EEVEE (default: CYCLES)
 - `--device` - CPU, CUDA, OPTIX, OPENCL (default: CPU)
 - `--samples` - Number of render samples
@@ -106,7 +106,6 @@ python run.py --create-example-config
 Create `config/custom.yaml`:
 
 ```yaml
-# Blender Benchmark Configuration
 blender_path: "/path/to/blender"
 scene: "data/references/lightsaber.blend"
 engine: "CYCLES"
@@ -171,24 +170,16 @@ Blender_Benchmark/
 python benchmark.py --scene data/references/scene.blend \
   --engine CYCLES \
   --device CPU \
-  --samples 100
-```
-
-### Example 2: Compare Quality
-```bash
-python benchmark.py --scene data/references/scene.blend \
-  --engine CYCLES \
-  --device CPU \
   --samples 256 \
   --reference data/references/ref/original.png
 ```
 
-### Example 3: Batch Testing with CLI
+### Example 2: Batch Testing with CLI
 ```bash
 python run.py --config config/test_cycles_cpu.yaml --repeat 3
 ```
 
-### Example 4: Multiple Configurations
+### Example 3: Multiple Configurations
 ```bash
 # Test different configurations
 python run.py --config config/cycles_cpu.yaml
@@ -200,10 +191,8 @@ python run.py --config config/eevee.yaml
 
 Results are saved in `output/results/`:
 
-### CSV Results
-`output/results/results.csv` - Cumulative benchmark results
+### JSON Results
 
-Columns:
 - render_engine
 - device
 - samples
@@ -217,9 +206,6 @@ Columns:
 - vram_max_mb
 - psnr
 - ssim
-
-### JSON Results
-`output/results/last_results.json` - Latest benchmark results
 
 ### Rendered Images
 `data/renders/` - Output PNG images from benchmark
@@ -257,7 +243,7 @@ Check YAML syntax at https://www.yamllint.com/
 2. **Close Other Apps**: Minimize background processes for consistency
 3. **Use Reference Images**: Compare output quality with `--reference`
 4. **Save Configurations**: Use YAML files for reproducible tests
-5. **Monitor Results**: Check `output/results/results.csv` for trends
+5. **Monitor Results**: Check `output/results/` for trends
 
 ## Author
 Oliwia Milewska
