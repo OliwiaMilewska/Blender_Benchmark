@@ -152,7 +152,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Blender Benchmark Tool")
     
     parser.add_argument("--blender-path", 
-                        default="/home/intel/Blender/blender-5.0.0-linux-x64/blender",
+                        default="/home/User/Blender/blender-5.0.0-linux-x64/blender",
                         help="Path to Blender executable")
     
     parser.add_argument("--scene", required=True,
