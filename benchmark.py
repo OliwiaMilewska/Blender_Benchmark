@@ -6,6 +6,7 @@ import os
 import csv
 import argparse
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 from monitor_system import SystemMonitor
 from monitor_vram import VRAMMonitor
@@ -13,12 +14,13 @@ from quality_metrics import compute_psnr, compute_ssim
 
 
 def ensure_dirs():
+    os.makedirs("output/results", exist_ok=True)
+    os.makedirs("output/plots", exist_ok=True)
+    os.makedirs("data/renders", exist_ok=True)
     os.makedirs("results", exist_ok=True)
-    os.makedirs("plots", exist_ok=True)
-    os.makedirs("renders", exist_ok=True)
 
 
-def append_csv(row, filename="results/results.csv"):
+def append_csv(row, filename="output/results/results.csv"):
     file_exists = os.path.isfile(filename)
 
     with open(filename, "a", newline="") as f:
@@ -35,7 +37,7 @@ def plot_metric(values, name, ylabel):
     plt.xlabel("Test index")
     plt.ylabel(ylabel)
     plt.grid(True)
-    plt.savefig(f"plots/{name}.png")
+    plt.savefig(f"output/plots/{name}.png")
     plt.close()
 
 
@@ -55,7 +57,7 @@ def run_benchmark(
     scene_name = os.path.splitext(os.path.basename(scene_path))[0]
     samples_str = str(samples) if samples else "default"
     output_filename = f"{scene_name}_{engine}_{device}_{samples_str}.png"
-    output_path = os.path.join("renders", output_filename)
+    output_path = os.path.join("data/renders", output_filename)
     output_path = os.path.abspath(output_path)
 
     print("\n=== Benchmark start ===")
@@ -81,10 +83,10 @@ def run_benchmark(
     
     # Use appropriate render script for the engine
     if engine == "CYCLES":
-        script_path = os.path.join(os.path.dirname(__file__), "blender_scripts", "blender_cycles_render.py")
+        script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", "blender_cycles_render.py")
         cmd.extend(["--python", script_path, "--", str(samples), output_path, "--cycles-device", device])
     elif engine == "EEVEE":
-        script_path = os.path.join(os.path.dirname(__file__), "blender_scripts", "blender_eevee_render.py")
+        script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", "blender_eevee_render.py")
         cmd.extend(["--python", script_path, "--", str(samples), output_path])
 
     print(f"Running command: {' '.join(cmd)}")
@@ -134,7 +136,9 @@ def run_benchmark(
     print(json.dumps(results, indent=4))
 
     # --- JSON save ---
-    with open("results/last_results.json", "w") as f:
+    current_date = datetime.now().strftime("%Y%m%d")
+    results_filename = f"results/_{current_date}_{engine}_{device}_{samples if samples else 'default'}.json"
+    with open(results_filename, "w") as f:
         json.dump(results, f, indent=4)
 
     # --- CSV save ---
@@ -148,7 +152,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Blender Benchmark Tool")
     
     parser.add_argument("--blender-path", 
-                        default="/home/intel/Blender/blender-5.0.0-linux-x64/blender",
+                        default="/home/User/Blender/blender-5.0.0-linux-x64/blender",
                         help="Path to Blender executable")
     
     parser.add_argument("--scene", required=True,
