@@ -177,7 +177,7 @@ Examples:
     # Validate scene argument
     if not args.scene:
         print("❌ Error: --scene argument is required")
-        print("Use: python benchmark.py --scene <path> or --config <file>")
+        print("Use: python benchmarkCli.py --scene <path> or --config <file>")
         parser.print_help()
         return
     
@@ -254,21 +254,6 @@ def print_commands():
         print("-" * 70)
         for cmd, description in items:
             print(f"  {cmd:<40} {description}")
-    
-    print("\n" + "="*70)
-    print("EXAMPLES")
-    print("="*70)
-    examples = [
-        ("Basic benchmark", "python benchmark.py --scene data/references/scene.blend --engine CYCLES --device CPU --samples 64"),
-        ("Load config", "python benchmark.py --config config/example.yaml"),
-        ("Run 5 times", "python benchmark.py --scene scene.blend --repeat 5"),
-        ("With reference image", "python benchmark.py --scene scene.blend --reference ref.png"),
-        ("Delete results", "python benchmark.py --delete-results"),
-    ]
-    
-    for name, example in examples:
-        print(f"\n{name}:")
-        print(f"  {example}")
     
     print("\n" + "="*70 + "\n")
 

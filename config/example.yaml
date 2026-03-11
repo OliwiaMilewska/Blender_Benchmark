@@ -1,9 +1,9 @@
 # Blender Benchmark Configuration Example
 # Copy this file and modify values as needed
-# Usage: python run.py --config config/your_config.yaml
+# Usage: python benchmarkCli.py --config config/your_config.yaml
 
 # Path to Blender executable
-blender_path: "/home/intel/Blender/blender-5.0.0-linux-x64/blender"
+blender_path: "/home/User/Blender/blender-5.0.0-linux-x64/blender"
 
 # Path to .blend scene file
 scene: "data/references/lightsaber.blend"

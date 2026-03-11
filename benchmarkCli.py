@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 CLI wrapper for blender_benchmark
-Run with: python run.py --help
-Or: python run.py --commands
+Run with: python benchmarkCli.py --help
+Or: python benchmarkCli.py --commands
 """
 import sys
 import os

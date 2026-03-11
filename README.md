@@ -67,38 +67,38 @@ python benchmark.py --scene data/references/lightsaber.blend \
 Use the CLI for advanced features and easier configuration:
 
 ```bash
-python run.py --help
-python run.py --commands
+python benchmarkCli.py --help
+python benchmarkCli.py --commands
 ```
 
 #### Basic Usage
 
 ```bash
-python run.py --scene data/references/scene.blend --engine CYCLES --device CPU --samples 64
+python benchmarkCli.py --scene data/references/scene.blend --engine CYCLES --device CPU --samples 64
 ```
 
 #### Load Configuration from YAML
 
 ```bash
-python run.py --config config/example.yaml
+python benchmarkCli.py --config config/example.yaml
 ```
 
 #### Run Multiple Times (For Statistical Accuracy)
 
 ```bash
-python run.py --scene data/references/scene.blend --repeat 5
+python benchmarkCli.py --scene data/references/scene.blend --repeat 5
 ```
 
 #### Delete Old Results
 
 ```bash
-python run.py --delete-results
+python benchmarkCli.py --delete-results
 ```
 
 #### Create Example Configuration File
 
 ```bash
-python run.py --create-example-config
+python benchmarkCli.py --create-example-config
 ```
 
 ### Configuration File (YAML)
@@ -118,7 +118,7 @@ repeat: 1
 
 Then run:
 ```bash
-python run.py --config config/custom.yaml
+python benchmarkCli.py --config config/custom.yaml
 ```
 
 ## Project Structure
@@ -176,15 +176,15 @@ python benchmark.py --scene data/references/scene.blend \
 
 ### Example 2: Batch Testing with CLI
 ```bash
-python run.py --config config/test_cycles_cpu.yaml --repeat 3
+python benchmarkCli.py --config config/test_cycles_cpu.yaml --repeat 3
 ```
 
 ### Example 3: Multiple Configurations
 ```bash
 # Test different configurations
-python run.py --config config/cycles_cpu.yaml
-python run.py --config config/cycles_cuda.yaml
-python run.py --config config/eevee.yaml
+python benchmarkCli.py --config config/cycles_cpu.yaml
+python benchmarkCli.py --config config/cycles_cuda.yaml
+python benchmarkCli.py --config config/eevee.yaml
 ```
 
 ## Output
