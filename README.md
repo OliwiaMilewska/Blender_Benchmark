@@ -101,6 +101,22 @@ python benchmarkCli.py --delete-results
 python benchmarkCli.py --create-example-config
 ```
 
+#### Create Performance Plots
+
+Generate a 3x3 grid of metric plots from benchmark results:
+
+```bash
+python benchmarkCli.py --plot --engine CYCLES --device CPU --samples 64
+```
+
+This creates a comprehensive visualization including:
+- Render time and CPU time trends
+- CPU intensity and noise metrics
+- GPU/RAM/VRAM usage
+- Quality metrics (PSNR, SSIM)
+
+Plots are saved in `output/plots/` with naming: `{engine}_{device}_{samples}.png`
+
 ### Configuration File (YAML)
 
 Create `config/custom.yaml`:
@@ -187,9 +203,42 @@ python benchmarkCli.py --config config/cycles_cuda.yaml
 python benchmarkCli.py --config config/eevee.yaml
 ```
 
+### Example 4: Generate Performance Plots
+```bash
+# Run benchmarks multiple times
+python benchmarkCli.py --scene data/references/scene.blend --engine CYCLES --device CPU --samples 256 --repeat 10
+
+# Then create visualization
+python benchmarkCli.py --plot --engine CYCLES --device CPU --samples 256
+```
+
 ## Output
 
-Results are saved in `output/results/`:
+Results are saved in separate locations:
+
+### CSV Results (`output/results/`)
+Named as: `{engine}_{device}_{samples}_{N}.csv`
+
+Each file contains metrics:
+- render_engine, device, samples
+- scene name
+- render_time_sec
+- cpu_time_sec
+- cpu_intensity
+- cpu_noise_std
+- gpu_avg_percent
+- ram_max_mb
+- vram_max_mb
+- psnr (quality metric)
+- ssim (similarity metric)
+
+### Plot Results (`output/plots/`)
+Named as: `{engine}_{device}_{samples}.png`
+
+3x3 grid visualization showing:
+- **Row 1**: Render time, CPU time, CPU intensity
+- **Row 2**: CPU noise, GPU usage, RAM usage
+- **Row 3**: VRAM usage, PSNR, SSIM
 
 ### JSON Results
 
