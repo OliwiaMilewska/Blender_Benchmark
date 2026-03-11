@@ -25,7 +25,7 @@ def append_csv(row, engine, device, samples, iteration):
     Append row to CSV file with engine/device/samples in filename.
     """
     if iteration is not None:
-        filename = f"output/results/{engine}_{device}_{samples}_iter{iteration}.csv"
+        filename = f"output/results/{engine}_{device}_{samples}_{iteration}.csv"
     else:
         filename = f"output/results/{engine}_{device}_{samples}.csv"
     file_exists = os.path.isfile(filename)
@@ -56,7 +56,7 @@ def run_benchmark(
     samples=32,
     frame=1,
     reference_image=None,
-    iteration=0,
+    iteration=1,
 ):
 
     ensure_dirs()
