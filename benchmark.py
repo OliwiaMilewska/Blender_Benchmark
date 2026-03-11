@@ -20,7 +20,14 @@ def ensure_dirs():
     os.makedirs("results", exist_ok=True)
 
 
-def append_csv(row, filename="output/results/results.csv"):
+def append_csv(row, engine, device, samples, iteration):
+    """
+    Append row to CSV file with engine/device/samples in filename.
+    """
+    if iteration is not None:
+        filename = f"output/results/{engine}_{device}_{samples}_iter{iteration}.csv"
+    else:
+        filename = f"output/results/{engine}_{device}_{samples}.csv"
     file_exists = os.path.isfile(filename)
 
     with open(filename, "a", newline="") as f:
@@ -49,6 +56,7 @@ def run_benchmark(
     samples=32,
     frame=1,
     reference_image=None,
+    iteration=0,
 ):
 
     ensure_dirs()
@@ -142,7 +150,7 @@ def run_benchmark(
         json.dump(results, f, indent=4)
 
     # --- CSV save ---
-    append_csv(results)
+    append_csv(results, engine=engine, device=device, samples=samples, iteration=iteration)
 
     print("=== Benchmark finished ===")
     return results

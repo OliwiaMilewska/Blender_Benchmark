@@ -202,7 +202,7 @@ Examples:
     for i in range(args.repeat):
         if args.repeat > 1:
             print(f"\n{'='*60}")
-            print(f"Run {i+1}/{args.repeat}")
+            print(f"Run {i}/{args.repeat}")
             print(f"{'='*60}\n")
         
         run_benchmark(
@@ -212,7 +212,8 @@ Examples:
             device=args.device,
             samples=args.samples,
             frame=args.frame,
-            reference_image=args.reference
+            reference_image=args.reference,
+            iteration=i
         )
     
     if args.repeat > 1:
