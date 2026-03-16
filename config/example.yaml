@@ -25,3 +25,6 @@ frame: 1
 
 # Number of times to repeat the benchmark (default: 1)
 repeat: 1
+
+# Delay in seconds between benchmark iterations (default: 600)
+wait: 600

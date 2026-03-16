@@ -5,13 +5,14 @@ import argparse
 import sys
 import os
 import shutil
+import time
 import yaml
 import json
 import csv
+from tqdm.auto import tqdm
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-
 
 def create_plots(engine, device, samples):
     """
@@ -22,8 +23,8 @@ def create_plots(engine, device, samples):
     plots_dir = Path("output/plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
     
-    # Match both <engine>_<device>_<samples>_*.csv and with iter prefix
-    pattern = f"{engine}_{device}_{samples}_*.csv"
+    # Match both <engine>_<device>_<samples>_*.csv and with optional date prefix + iteration
+    pattern = f"*_{engine}_{device}_{samples}_*.csv"
     csv_files = sorted(results_dir.glob(pattern))
     
     if not csv_files:
@@ -47,23 +48,10 @@ def create_plots(engine, device, samples):
     for csv_file in csv_files:
         try:
             text = csv_file.read_text().strip()
-            # treat whole file as JSON
             result = json.loads(text)
-            # clean keys by stripping whitespace
             clean = {k.strip(): v for k, v in result.items()}
 
-            # determine iteration from filename
-            stem = csv_file.stem
-            if "_iter" in stem:
-                iter_num = int(stem.split("_iter")[-1])
-            else:
-                # fallback: take last underscore-separated token
-                try:
-                    iter_num = int(stem.split("_")[-1])
-                except ValueError:
-                    iter_num = len(data["iteration"]) + 1
-
-            data["iteration"].append(iter_num)
+            data["iteration"].append(int(clean["iteration"]))
             data["render_time_sec"].append(float(clean.get("render_time_sec", 0)))
             data["cpu_time_sec"].append(float(clean.get("cpu_time_sec", 0)))
             data["cpu_intensity"].append(float(clean.get("cpu_intensity", 0)))
@@ -180,6 +168,7 @@ device: "CPU"
 samples: 64
 reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
 repeat: 1
+wait: 600
 """
     
     config_dir = Path("config")
@@ -258,6 +247,12 @@ Examples:
                         type=int, 
                         default=1,
                         help="Run benchmark N times (default: 1)")
+
+    # Wait interval between iterations (seconds)
+    parser.add_argument("--wait", 
+                        type=int,
+                        default=600,
+                        help="Delay in seconds between benchmark iterations (default: 600)")
     
     # Show help
     parser.add_argument("--commands", 
@@ -304,6 +299,7 @@ Examples:
             args.reference = config.get("reference", args.reference)
             args.frame = config.get("frame", args.frame)
             args.repeat = config.get("repeat", args.repeat)
+            args.wait = config.get("wait", args.wait)
         else:
             return
     
@@ -349,6 +345,13 @@ Examples:
             reference_image=args.reference,
             iteration=run_iter
         )
+
+        if args.repeat > 1 and run_iter < args.repeat:
+            wait_seconds = max(0, args.wait)
+            print(f"⏳ Waiting {wait_seconds} seconds before next iteration...")
+
+            for _ in tqdm(range(wait_seconds), desc="Waiting", unit="s", leave=False):
+                time.sleep(1)
     
     if args.repeat > 1:
         print(f"\n✓ All {args.repeat} runs completed!")

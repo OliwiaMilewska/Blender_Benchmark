@@ -61,6 +61,7 @@ python benchmark.py --scene data/references/lightsaber.blend \
 - `--samples` - Number of render samples
 - `--reference` - Path to reference image for quality comparison
 - `--frame` - Frame number to render (default: 1)
+- `--wait` - Seconds to wait between repeated runs (default: 600)
 
 ### Option 2: CLI with Configuration
 
@@ -130,6 +131,7 @@ samples: 64
 reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
 frame: 1
 repeat: 1
+wait: 600
 ```
 
 Then run:
