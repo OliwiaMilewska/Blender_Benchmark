@@ -97,3 +97,17 @@ class SystemMonitor:
 
         # --- render time approximated by number of samples ---
         render_duration = len(self.cpu_time_samples) * self.interval
+
+        # --- CPU intensity ---
+        cpu_intensity = cpu_time_sec / render_duration if render_duration > 0 else 0
+
+        # --- CPU utilization standard deviation ---
+        cpu_noise_std = statistics.stdev(self.cpu_util_samples) if len(self.cpu_util_samples) > 1 else 0
+
+        return {
+            "cpu_time_sec": cpu_time_sec,
+            "cpu_intensity": cpu_intensity,
+            "cpu_noise_std": cpu_noise_std,
+            "gpu_avg_percent": sum(self.gpu_samples) / len(self.gpu_samples) if self.gpu_samples else 0,
+            "ram_max_mb": max(self.ram_samples) if self.ram_samples else 0
+        }

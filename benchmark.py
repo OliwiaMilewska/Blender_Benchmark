@@ -8,9 +8,9 @@ import argparse
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-from monitor_system import SystemMonitor
-from monitor_vram import VRAMMonitor
-from quality_metrics import compute_psnr, compute_ssim
+from blender_benchmark.monitor_system import SystemMonitor
+from blender_benchmark.monitor_vram import VRAMMonitor
+from blender_benchmark.quality_metrics import compute_psnr, compute_ssim
 
 
 def ensure_dirs():
