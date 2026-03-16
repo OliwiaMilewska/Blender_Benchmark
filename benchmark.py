@@ -126,6 +126,7 @@ def run_benchmark(
 
     # --- Metrics collection ---
     results = {
+        "iteration": iteration,
         "render_engine": engine,
         "device": device,
         "samples": samples if samples else "default",
@@ -145,7 +146,8 @@ def run_benchmark(
 
     # --- JSON save ---
     current_date = datetime.now().strftime("%Y%m%d")
-    results_filename = f"results/_{current_date}_{engine}_{device}_{samples if samples else 'default'}.json"
+    iteration_suffix = f"_{iteration}" if iteration is not None else ""
+    results_filename = f"results/{current_date}_{engine}_{device}_{samples if samples else 'default'}{iteration_suffix}.json"
     with open(results_filename, "w") as f:
         json.dump(results, f, indent=4)
 

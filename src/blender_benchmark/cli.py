@@ -333,9 +333,10 @@ Examples:
     print(f"\n🔄 Running benchmark {args.repeat} time(s)...\n")
     
     for i in range(args.repeat):
+        run_iter = i + 1
         if args.repeat > 1:
             print(f"\n{'='*60}")
-            print(f"Run {i}/{args.repeat}")
+            print(f"Run {run_iter}/{args.repeat}")
             print(f"{'='*60}\n")
         
         run_benchmark(
@@ -346,7 +347,7 @@ Examples:
             samples=args.samples,
             frame=args.frame,
             reference_image=args.reference,
-            iteration=i
+            iteration=run_iter
         )
     
     if args.repeat > 1:
