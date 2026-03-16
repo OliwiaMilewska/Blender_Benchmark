@@ -350,7 +350,7 @@ Examples:
             wait_seconds = max(0, args.wait)
             print(f"⏳ Waiting {wait_seconds} seconds before next iteration...")
 
-            for _ in tqdm(range(wait_seconds), desc="Waiting", unit="s", leave=False):
+            for _ in tqdm(range(wait_seconds), desc="Idle wait for next iteration", unit="s", leave=False):
                 time.sleep(1)
     
     if args.repeat > 1:
