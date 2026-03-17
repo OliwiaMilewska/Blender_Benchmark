@@ -23,12 +23,11 @@ def create_plots(engine, device, samples):
     plots_dir = Path("output/plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
     
-    # Match both <engine>_<device>_<samples>_*.csv and with optional date prefix + iteration
-    pattern = f"*_{engine}_{device}_{samples}_*.csv"
-    csv_files = sorted(results_dir.glob(pattern))
+    pattern = f"*_{engine}_{device}_{samples}_*.json"
+    json_files = sorted(results_dir.glob(pattern))
     
-    if not csv_files:
-        print(f"❌ No CSV files found for {engine}_{device}_{samples}")
+    if not json_files:
+        print(f"❌ No JSON files found for {engine}_{device}_{samples}")
         return
     
     # Prepare containers
@@ -45,9 +44,9 @@ def create_plots(engine, device, samples):
         "ssim": []
     }
     
-    for csv_file in csv_files:
+    for json_file in json_files:
         try:
-            text = csv_file.read_text().strip()
+            text = json_file.read_text().strip()
             result = json.loads(text)
             clean = {k.strip(): v for k, v in result.items()}
 
@@ -64,16 +63,16 @@ def create_plots(engine, device, samples):
             ssim = clean.get("ssim")
             data["ssim"].append(float(ssim) if ssim is not None else 0)
         except Exception as e:
-            print(f"⚠️  Error reading {csv_file}: {e}")
+            print(f"⚠️  Error reading {json_file}: {e}")
             continue
     
     if not data["iteration"]:
-        print(f"❌ Could not read any valid data from CSV files")
+        print(f"❌ Could not read any valid data from JSON files")
         return
     
     # Create 3x3 grid of plots
     fig = plt.figure(figsize=(15, 12))
-    fig.suptitle(f"{engine} - {device} - {samples} samples", fontsize=16, fontweight="bold")
+    fig.suptitle(f"{engine}-{device}-{samples} samples-{clean.get('scene', 0)}", fontsize=16, fontweight="bold")
     gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.3, wspace=0.3)
     
     metrics = [
@@ -350,7 +349,7 @@ Examples:
             wait_seconds = max(0, args.wait)
             print(f"⏳ Waiting {wait_seconds} seconds before next iteration...")
 
-            for _ in tqdm(range(wait_seconds), desc="Idle wait for next iteration", unit="s", leave=False):
+            for _ in tqdm(range(wait_seconds), desc="Idle time", unit="s", leave=False):
                 time.sleep(1)
     
     if args.repeat > 1:

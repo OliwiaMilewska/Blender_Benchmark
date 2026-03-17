@@ -20,14 +20,12 @@ def ensure_dirs():
     os.makedirs("results", exist_ok=True)
 
 
-def append_csv(row, engine, device, samples, iteration):
+def append_csv(row, engine, device, samples, date_str):
     """
-    Append row to CSV file with engine/device/samples in filename.
+    Append row to CSV file matching JSON base name: output/results/{date}_{engine}_{device}_{samples}.csv.
     """
-    if iteration is not None:
-        filename = f"output/results/{engine}_{device}_{samples}_{iteration}.csv"
-    else:
-        filename = f"output/results/{engine}_{device}_{samples}.csv"
+    filename = f"output/results/{date_str}_{engine}_{device}_{samples}.csv"
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     file_exists = os.path.isfile(filename)
 
     with open(filename, "a", newline="") as f:
@@ -146,13 +144,14 @@ def run_benchmark(
 
     # --- JSON save ---
     current_date = datetime.now().strftime("%Y%m%d")
-    iteration_suffix = f"_{iteration}" if iteration is not None else ""
-    results_filename = f"results/{current_date}_{engine}_{device}_{samples if samples else 'default'}{iteration_suffix}.json"
+
+    results_filename = f"output/results/{current_date}_{engine}_{device}_{samples}_{iteration}.json"
+    os.makedirs(os.path.dirname(results_filename), exist_ok=True)
     with open(results_filename, "w") as f:
         json.dump(results, f, indent=4)
 
-    # --- CSV save ---
-    append_csv(results, engine=engine, device=device, samples=samples, iteration=iteration)
+    # --- CSV save (per-config file, no iteration suffix)
+    append_csv(results, engine=engine, device=device, samples=samples, date_str=current_date)
 
     print("=== Benchmark finished ===")
     return results
