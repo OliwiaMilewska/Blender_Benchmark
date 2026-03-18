@@ -16,7 +16,7 @@ from blender_benchmark.quality_metrics import compute_psnr, compute_ssim
 def ensure_dirs():
     os.makedirs("output/results", exist_ok=True)
     os.makedirs("output/plots", exist_ok=True)
-    os.makedirs("data/renders", exist_ok=True)
+    os.makedirs("output/renders", exist_ok=True)
     os.makedirs("results", exist_ok=True)
 
 
@@ -52,7 +52,6 @@ def run_benchmark(
     engine="CYCLES",
     device="CPU",
     samples=32,
-    frame=1,
     reference_image=None,
     iteration=1,
 ):
@@ -61,17 +60,16 @@ def run_benchmark(
 
     # Generate output filename based on parameters
     scene_name = os.path.splitext(os.path.basename(scene_path))[0]
-    samples_str = str(samples) if samples else "default"
-    output_filename = f"{scene_name}_{engine}_{device}_{samples_str}.png"
-    output_path = os.path.join("data/renders", output_filename)
+    output_filename = f"{scene_name}_{engine}_{device}_{samples}_{iteration}.png"
+    output_path = os.path.join("output/renders", output_filename)
     output_path = os.path.abspath(output_path)
 
     print("\n=== Benchmark start ===")
     print(f"Engine: {engine}")
     print(f"Device: {device}")
-    print(f"Samples: {samples if samples else 'default'}")
+    print(f"Samples: {samples}")
     print(f"Scene: {scene_path}")
-    print(f"Reference: {reference_image if reference_image else 'None'}")
+    print(f"Reference: {reference_image}")
     print(f"Output: {output_path}")
 
     # --- Start monitors ---
@@ -111,7 +109,7 @@ def run_benchmark(
     sys_metrics = sys_monitor.get_metrics()
     vram_max = vram_monitor.get_max_vram()
     
-    # Path to rendered image (already saved as full name)
+    # Path to rendered image
     rendered_image = output_path
 
     # --- Quality metrics ---
@@ -183,9 +181,6 @@ if __name__ == "__main__":
     parser.add_argument("--reference",
                         help="Path to reference PNG image for quality comparison")
     
-    parser.add_argument("--frame", type=int, default=1,
-                        help="Frame number to render")
-    
     args = parser.parse_args()
     
     run_benchmark(
@@ -194,6 +189,5 @@ if __name__ == "__main__":
         engine=args.engine,
         device=args.device,
         samples=args.samples,
-        frame=args.frame,
         reference_image=args.reference
     )

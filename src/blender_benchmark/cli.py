@@ -116,7 +116,7 @@ def create_plots(engine, device, samples):
 def delete_results():
     """Delete old results, plots, and renders."""
     output_path = Path("output")
-    data_path = Path("data/renders")
+    data_path = Path("output/renders")
     
     deleted_items = []
     
@@ -128,7 +128,7 @@ def delete_results():
     # Delete renders
     if data_path.exists():
         shutil.rmtree(data_path)
-        deleted_items.append("✓ Deleted data/renders/ directory")
+        deleted_items.append("✓ Deleted output/renders/ directory")
     
     if deleted_items:
         print("Results deleted successfully:")
@@ -236,11 +236,6 @@ Examples:
     parser.add_argument("--reference",
                         help="Path to reference PNG image for quality comparison")
     
-    parser.add_argument("--frame", 
-                        type=int, 
-                        default=1,
-                        help="Frame number to render (default: 1)")
-    
     # Repeat option
     parser.add_argument("--repeat", 
                         type=int, 
@@ -296,7 +291,6 @@ Examples:
             args.device = config.get("device", args.device)
             args.samples = config.get("samples", args.samples)
             args.reference = config.get("reference", args.reference)
-            args.frame = config.get("frame", args.frame)
             args.repeat = config.get("repeat", args.repeat)
             args.wait = config.get("wait", args.wait)
         else:
@@ -340,7 +334,6 @@ Examples:
             engine=args.engine,
             device=args.device,
             samples=args.samples,
-            frame=args.frame,
             reference_image=args.reference,
             iteration=run_iter
         )

@@ -20,9 +20,6 @@ samples: 64
 # Path to reference image for quality comparison (optional)
 reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
 
-# Frame number to render (optional, default: 1)
-frame: 1
-
 # Number of times to repeat the benchmark (default: 1)
 repeat: 1
 

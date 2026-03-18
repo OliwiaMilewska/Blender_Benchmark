@@ -60,7 +60,6 @@ python benchmark.py --scene data/references/lightsaber.blend \
 - `--device` - CPU, CUDA, OPTIX, OPENCL (default: CPU)
 - `--samples` - Number of render samples
 - `--reference` - Path to reference image for quality comparison
-- `--frame` - Frame number to render (default: 1)
 - `--wait` - Seconds to wait between repeated runs (default: 600)
 
 ### Option 2: CLI with Configuration
@@ -173,9 +172,6 @@ Blender_Benchmark/
 ├── config/
 │   └── example.yaml                # Example configuration
 │
-├── tests/                          # Unit tests
-│   └── __init__.py
-│
 ├── requirements.txt                # Python dependencies
 ├── LICENSE                         # MIT License
 └── README.md                       # This file
@@ -259,7 +255,7 @@ Named as: `{engine}_{device}_{samples}.png`
 - ssim
 
 ### Rendered Images
-`data/renders/` - Output PNG images from benchmark
+`output/renders/` - Output PNG images from benchmark
 
 ### Plots
 `output/plots/` - Performance visualization charts
