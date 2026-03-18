@@ -9,11 +9,11 @@ import argparse
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+
 from blender_benchmark.monitor_system import SystemMonitor
 from blender_benchmark.monitor_vram import VRAMMonitor
 from blender_benchmark.quality_metrics import compute_psnr, compute_ssim
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
 def ensure_dirs():
     os.makedirs("output/results", exist_ok=True)
