@@ -48,7 +48,7 @@ Run benchmarks directly with command-line arguments:
 
 #### For Cycles:
 ```bash
-python benchmark.py --scene data/references/lightsaber.blend \
+python benchmarkCli.py --scene data/references/lightsaber.blend \
   --engine CYCLES \
   --device CPU \
   --samples 64 \
@@ -57,7 +57,7 @@ python benchmark.py --scene data/references/lightsaber.blend \
 
 #### For Eevee:
 ```bash
-python benchmark.py --scene data/references/lightsaber.blend \
+python benchmarkCli.py --scene data/references/lightsaber.blend \
   --engine BLENDER_EEVEE \
   --samples 64 \
   --profile HIGH \
@@ -168,7 +168,7 @@ python benchmarkCli.py --config config/custom.yaml
 
 ```
 Blender_Benchmark/
-├── benchmark.py                    # Main benchmark script
+├── benchmarkCli.py                    # Main benchmark script
 ├── benchmarkCli.py                 # CLI entry point
 ├── monitor_system.py               # CPU/GPU monitoring
 ├── monitor_vram.py                 # VRAM monitoring
@@ -207,7 +207,7 @@ Blender_Benchmark/
 
 ### Example 1: Basic Benchmark (Cycles)
 ```bash
-python benchmark.py --scene data/references/scene.blend \
+python benchmarkCli.py --scene data/references/scene.blend \
   --engine CYCLES \
   --device CPU \
   --samples 256 \
@@ -216,7 +216,7 @@ python benchmark.py --scene data/references/scene.blend \
 
 ### Example 2: Eevee Benchmark
 ```bash
-python benchmark.py --scene data/references/scene.blend \
+python benchmarkCli.py --scene data/references/scene.blend \
   --engine BLENDER_EEVEE \
   --samples 64 \
   --profile HIGH \
