@@ -1,0 +1,29 @@
+# Blender Benchmark Configuration Example
+# Copy this file and modify values as needed
+# Usage: python benchmarkCli.py --config config/your_config.yaml
+
+# Path to Blender executable
+blender_path: "/home/User/Blender/blender-5.0.0-linux-x64/blender"
+
+# Path to .blend scene file
+scene: "data/references/lightsaber.blend"
+
+# Render engine: CYCLES or BLENDER_EEVEE
+engine: "CYCLES"
+
+# Cycles-specific settings
+cycles_settings:
+  # Render device: CPU, CUDA, OPTIX, OPENCL
+  device: "CPU"
+  
+  # Number of render samples
+  samples: 64
+
+# Path to reference image for quality comparison (optional)
+reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
+
+# Number of times to repeat the benchmark (default: 1)
+repeat: 1
+
+# Delay in seconds between benchmark iterations (default: 600)
+wait: 600

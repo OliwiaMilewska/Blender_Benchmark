@@ -54,10 +54,10 @@ def main():
     bpy.context.scene.render.image_settings.file_format = 'PNG'
     
     # Render
-    print(f"Starting render with {samples} samples...")
+    print(f"Starting render ...")
     bpy.ops.render.render(write_still=True)
     
-    print(f"CYCLES render completed with {samples} samples, saved to: {output_path}")
+    print(f"CYCLES render completed, saved to: {output_path}")
 
 if __name__ == "__main__":
     main()

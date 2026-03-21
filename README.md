@@ -4,18 +4,19 @@ Python script to benchmark and test rendering engines in Blender. Measure perfor
 
 ## Features
 
-- 🎨 **Multi-Engine Support**: Test CYCLES and EEVEE rendering engines
-- 💻 **Device Selection**: CPU, CUDA, OPTIX, OPENCL support
+- 🎨 **Multi-Engine Support**: Test CYCLES and EEVEE rendering engines with engine-specific settings
+- 💻 **Device Selection**: CPU, CUDA, OPTIX, OPENCL support for Cycles
+- ⚙️ **Engine-Specific Configurations**: Custom settings for Cycles (device, samples) and Eevee (shadow pool size, taa_render_samples)
 - 📊 **Performance Metrics**: Track render time, CPU/GPU usage, RAM/VRAM
 - 🖼️ **Quality Assessment**: PSNR and SSIM image quality comparison
 - 🔄 **Batch Testing**: Run benchmarks multiple times for reliable results
-- ⚙️ **Config Management**: YAML configuration files
+- ⚙️ **Config Management**: YAML configuration files with engine-specific sections
 - 📈 **Data Export**: JSON result formats
 
 ## Requirements
 
 - Python 3.8+
-- Blender 4.0+ (with Python support)
+- Blender 5.0+ (with Python support)
 - NVIDIA GPU (for CUDA/OPTIX) - optional, CPU rendering works without
 
 ## Installation
@@ -45,6 +46,7 @@ Required packages:
 
 Run benchmarks directly with command-line arguments:
 
+#### For Cycles:
 ```bash
 python benchmark.py --scene data/references/lightsaber.blend \
   --engine CYCLES \
@@ -53,14 +55,24 @@ python benchmark.py --scene data/references/lightsaber.blend \
   --reference data/references/ref/lightsaber_Cycles_CPU_64.png
 ```
 
+#### For Eevee:
+```bash
+python benchmark.py --scene data/references/lightsaber.blend \
+  --engine BLENDER_EEVEE \
+  --samples 64 \
+  --profile HIGH \
+  --reference data/references/ref/lightsaber_Eevee_64.png
+```
+
 **Arguments:**
 - `--blender-path` - Path to Blender executable (default: `/home/User/Blender/blender-5.0.0-linux-x64/blender`)
 - `--scene` - Path to .blend file (REQUIRED)
 - `--engine` - CYCLES or BLENDER_EEVEE (default: CYCLES)
-- `--device` - CPU, CUDA, OPTIX, OPENCL (default: CPU)
+- `--device` - CPU, CUDA, OPTIX, OPENCL (default: CPU, only for Cycles)
 - `--samples` - Number of render samples
 - `--reference` - Path to reference image for quality comparison
 - `--wait` - Seconds to wait between repeated runs (default: 600)
+= `--profile` - Eevee quality profile (default: MEDIUM)
 
 ### Option 2: CLI with Configuration
 
@@ -121,14 +133,28 @@ Plots are saved in `output/plots/` with naming: `{engine}_{device}_{samples}.png
 
 Create `config/custom.yaml`:
 
+#### For Cycles:
 ```yaml
 blender_path: "/path/to/blender"
 scene: "data/references/lightsaber.blend"
 engine: "CYCLES"
-device: "CPU"
-samples: 64
+cycles_settings:
+  device: "CPU"
+  samples: 64
 reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
-frame: 1
+repeat: 1
+wait: 600
+```
+
+#### For Eevee:
+```yaml
+blender_path: "/path/to/blender"
+scene: "data/references/lightsaber.blend"
+engine: "BLENDER_EEVEE"
+eevee_settings:
+  profile: "HIGH"
+  samples: 64
+reference: "data/references/ref/lightsaber_Eevee_64.png"
 repeat: 1
 wait: 600
 ```
@@ -179,7 +205,7 @@ Blender_Benchmark/
 
 ## Examples
 
-### Example 1: Basic Benchmark
+### Example 1: Basic Benchmark (Cycles)
 ```bash
 python benchmark.py --scene data/references/scene.blend \
   --engine CYCLES \
@@ -188,9 +214,19 @@ python benchmark.py --scene data/references/scene.blend \
   --reference data/references/ref/original.png
 ```
 
-### Example 2: Batch Testing with CLI
+### Example 2: Eevee Benchmark
+```bash
+python benchmark.py --scene data/references/scene.blend \
+  --engine BLENDER_EEVEE \
+  --samples 64 \
+  --profile HIGH \
+  --reference data/references/ref/eevee_original.png
+```
+
+### Example 3: Batch Testing with CLI
 ```bash
 python benchmarkCli.py --config config/test_cycles_cpu.yaml --repeat 3
+python benchmarkCli.py --config config/test_eevee.yaml --repeat 3
 ```
 
 ### Example 3: Multiple Configurations
@@ -205,9 +241,11 @@ python benchmarkCli.py --config config/eevee.yaml
 ```bash
 # Run benchmarks multiple times
 python benchmarkCli.py --scene data/references/scene.blend --engine CYCLES --device CPU --samples 256 --repeat 10
+python benchmarkCli.py --scene data/references/scene.blend --engine BLENDER_EEVEE --samples 64 --repeat 10
 
 # Then create visualization
 python benchmarkCli.py --plot --engine CYCLES --device CPU --samples 256
+python benchmarkCli.py --plot --engine BLENDER_EEVEE --samples 64
 ```
 
 ## Output

@@ -1,46 +1,71 @@
 #!/usr/bin/env python3
-"""
-Blender script for EEVEE rendering with custom samples setting.
-This script is meant to be executed within Blender using --python parameter.
-"""
 import bpy
 import sys
 
 def main():
-    # Get command line arguments passed to Blender
-    # Arguments after -- are available in sys.argv
     argv = sys.argv
-    
-    # Find arguments after "--"
+
     if "--" in argv:
         argv = argv[argv.index("--") + 1:]
     else:
         argv = []
-    
-    # Parse arguments: samples, output_path
+
     if len(argv) >= 2:
-        samples = int(argv[0])
+        try:
+            samples = int(argv[0]) if argv[0] != "None" else 64
+        except ValueError:
+            print(f"Invalid samples '{argv[0]}', using default 64")
+            samples = 64
+
         output_path = argv[1]
+
+        # Domyślny profil = MEDIUM
+        profile = "MEDIUM"
+
+        i = 2
+        while i < len(argv):
+            if argv[i] == "--profile" and i + 1 < len(argv):
+                profile = argv[i + 1].upper()
+                i += 2
+            else:
+                i += 1
     else:
         print("Error: Expected at least 2 arguments: samples and output_path")
         return
-    
-    # Set render engine to EEVEE
-    bpy.context.scene.render.engine = 'BLENDER_EEVEE'
-    
-    # Set EEVEE samples
-    bpy.context.scene.eevee.taa_render_samples = samples
-    print(f"Set EEVEE samples to: {samples}")
-    
-    # Set output path and format
-    bpy.context.scene.render.filepath = output_path
-    bpy.context.scene.render.image_settings.file_format = 'PNG'
-    
-    # Render
-    print(f"Starting render with {samples} samples...")
-    bpy.ops.render.render(write_still=True)
-    
-    print(f"EEVEE render completed with {samples} samples, saved to: {output_path}")
 
+    scene = bpy.context.scene
+
+    # --- ENGINE ---
+    scene.render.engine = 'BLENDER_EEVEE'
+
+    # --- SAMPLES ---
+    scene.eevee.taa_render_samples = samples
+    print(f"Samples: {samples}")
+
+    # --- PROFILE SETTINGS ---
+    print(f"Using profile: {profile}")
+
+    if profile == "LOW":
+        scene.eevee.shadow_pool_size = '512'
+        scene.eevee.taa_render_samples = 4
+
+    elif profile == "MEDIUM":
+        scene.eevee.shadow_pool_size = '1024'
+        scene.eevee.taa_render_samples = 8
+
+    else:  # HIGH
+        scene.eevee.shadow_pool_size = '2048'
+        scene.eevee.taa_render_samples = 16
+
+    # --- OUTPUT ---
+    scene.render.filepath = output_path
+    scene.render.image_settings.file_format = 'PNG'
+
+    # --- RENDER ---
+    print("Starting render...")
+    bpy.ops.render.render(write_still=True)
+
+    print(f"EEVEE render completed, saved to: {output_path}")
+    
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-# Blender Benchmark Configuration Example
+# Blender Benchmark Configuration Example for Eevee
 # Copy this file and modify values as needed
 # Usage: python benchmarkCli.py --config config/your_config.yaml
 
@@ -8,17 +8,19 @@ blender_path: "/home/User/Blender/blender-5.0.0-linux-x64/blender"
 # Path to .blend scene file
 scene: "data/references/lightsaber.blend"
 
-# Render engine: CYCLES or BLENDER_EEVEE
-engine: "CYCLES"
+# Render engine: BLENDER_EEVEE
+engine: "BLENDER_EEVEE"
 
-# Render device (for CYCLES): CPU, CUDA, OPTIX, OPENCL
-device: "CPU"
-
-# Number of render samples
-samples: 64
+# Eevee-specific settings
+eevee_settings:
+  # Quality level (LOW, MEDIUM, HIGH)
+  profile: "MEDIUM"
+  
+  # Number of render samples (affects anti-aliasing and quality)
+  samples: 64
 
 # Path to reference image for quality comparison (optional)
-reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
+reference: "data/references/ref/lightsaber_Eevee_64.png"
 
 # Number of times to repeat the benchmark (default: 1)
 repeat: 1

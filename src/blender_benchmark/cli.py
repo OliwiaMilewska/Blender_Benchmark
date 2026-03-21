@@ -2,13 +2,12 @@
 Command-line interface for blender_benchmark.
 """
 import argparse
-import sys
 import os
 import shutil
 import time
 import yaml
 import json
-import csv
+import sys as _sys
 from tqdm.auto import tqdm
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -197,6 +196,7 @@ Examples:
     # Configuration
     parser.add_argument("--config", 
                         help="Load configuration from YAML file")
+    
     parser.add_argument("--create-example-config", 
                         action="store_true",
                         help="Create example configuration files")
@@ -282,9 +282,8 @@ Examples:
     
     # Load config if provided
     if args.config:
-        config = load_config(args.config)
-        if config:
-            # Override arguments with config values
+        try:
+            config = load_config(args.config)
             args.blender_path = config.get("blender_path", args.blender_path)
             args.scene = config.get("scene", args.scene)
             args.engine = config.get("engine", args.engine)
@@ -293,28 +292,29 @@ Examples:
             args.reference = config.get("reference", args.reference)
             args.repeat = config.get("repeat", args.repeat)
             args.wait = config.get("wait", args.wait)
-        else:
+
+            # Override with engine-specific settings
+            if args.engine == "CYCLES":
+                args.device = config.get('cycles_settings', {}).get('device', "CPU")
+                args.samples = config.get('cycles_settings', {}).get('samples', 64)
+
+            if args.engine == "BLENDER_EEVEE":
+                args.profile = config.get('eevee_settings', {}).get('profile', "LOW")
+                args.samples = config.get('eevee_settings', {}).get('samples', 64)
+
+        except ImportError as e:
+            print(f"❌ Error reading config file: {e}")
             return
     
-    # Validate scene argument
-    if not args.scene:
-        print("❌ Error: --scene argument is required")
-        print("Use: python benchmarkCli.py --scene <path> or --config <file>")
-        parser.print_help()
-        return
     
-    # Import benchmark function
-    import sys as _sys
     _sys.path.insert(0, os.path.dirname(__file__))
-    
-    # Load the root directory module
     root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     _sys.path.insert(0, root_dir)
     
     try:
-        from benchmark import run_benchmark
+        from benchmark import run_cycles_benchmark, run_eevee_benchmark
     except ImportError as e:
-        print(f"❌ Error importing benchmark: {e}")
+        print(f"❌ Error importing benchmark functions: {e}")
         print("Make sure benchmark.py exists in the root directory")
         return
     
@@ -328,15 +328,24 @@ Examples:
             print(f"Run {run_iter}/{args.repeat}")
             print(f"{'='*60}\n")
         
-        run_benchmark(
-            blender_path=args.blender_path,
-            scene_path=args.scene,
-            engine=args.engine,
-            device=args.device,
-            samples=args.samples,
-            reference_image=args.reference,
-            iteration=run_iter
-        )
+        if args.engine == "CYCLES":
+            run_cycles_benchmark(
+                blender_path=args.blender_path,
+                scene_path=args.scene,
+                device=args.device,
+                samples=args.samples,
+                reference_image=args.reference,
+                iteration=run_iter
+            )
+        elif args.engine == "BLENDER_EEVEE":
+            run_eevee_benchmark(
+                blender_path=args.blender_path,
+                scene_path=args.scene,
+                samples=args.samples,
+                reference_image=args.reference,
+                iteration=run_iter,
+                profile=args.profile
+            )
 
         if args.repeat > 1 and run_iter < args.repeat:
             wait_seconds = max(0, args.wait)

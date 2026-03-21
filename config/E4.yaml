@@ -1,0 +1,16 @@
+
+blender_path: "/home/User/Blender/blender-5.0.0-linux-x64/blender"
+
+scene: "data/references/lightsaber.blend"
+
+engine: "BLENDER_EEVEE"
+
+eevee_settings:
+  profile: "MEDIUM"
+  samples: 64
+
+reference: "data/references/ref/lightsaber_Eevee_64.png"
+
+repeat: 10
+
+wait: 600

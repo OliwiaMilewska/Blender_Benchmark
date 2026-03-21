@@ -1,4 +1,3 @@
-# benchmark.py
 import subprocess
 import time
 import json
@@ -48,27 +47,35 @@ def plot_metric(values, name, ylabel):
     plt.close()
 
 
-def run_benchmark(
+def _run_benchmark_base(
     blender_path,
+    engine,
+    device,
+    samples,
     scene_path,
-    engine="CYCLES",
-    device="CPU",
-    samples=32,
-    reference_image=None,
-    iteration=1,
+    reference_image,
+    iteration,
+    extra_cmd_args=None,
+    output_device=None,
 ):
+    """Base benchmark function. """
+    if extra_cmd_args is None:
+        extra_cmd_args = []
+    if output_device is None:
+        output_device = device
 
     ensure_dirs()
 
     # Generate output filename based on parameters
     scene_name = os.path.splitext(os.path.basename(scene_path))[0]
-    output_filename = f"{scene_name}_{engine}_{device}_{samples}_{iteration}.png"
+    output_filename = f"{scene_name}_{engine}_{output_device}_{samples}_{iteration}.png"
     output_path = os.path.join("output/renders", output_filename)
     output_path = os.path.abspath(output_path)
 
-    print("\n=== Benchmark start ===")
+    print(f"\n=== {engine} Benchmark start ===")
     print(f"Engine: {engine}")
-    print(f"Device: {device}")
+    if engine == "CYCLES":
+        print(f"Device: {device}")
     print(f"Samples: {samples}")
     print(f"Scene: {scene_path}")
     print(f"Reference: {reference_image}")
@@ -87,13 +94,9 @@ def run_benchmark(
         "-b", scene_path
     ]
     
-    # Use appropriate render script for the engine
-    if engine == "CYCLES":
-        script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", "blender_cycles_render.py")
-        cmd.extend(["--python", script_path, "--", str(samples), output_path, "--cycles-device", device])
-    elif engine == "EEVEE":
-        script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", "blender_eevee_render.py")
-        cmd.extend(["--python", script_path, "--", str(samples), output_path])
+    script_name = "blender_cycles_render.py" if engine == "CYCLES" else "blender_eevee_render.py"
+    script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", script_name)
+    cmd.extend(["--python", script_path, "--", str(samples), output_path] + extra_cmd_args)
 
     print(f"Running command: {' '.join(cmd)}")
     print("\n--- Blender Output ---")
@@ -145,17 +148,61 @@ def run_benchmark(
     # --- JSON save ---
     current_date = datetime.now().strftime("%Y%m%d")
 
-    results_filename = f"output/results/{current_date}_{engine}_{device}_{samples}_{iteration}.json"
+    results_filename = f"output/results/{current_date}_{engine}_{output_device}_{samples}_{iteration}.json"
     os.makedirs(os.path.dirname(results_filename), exist_ok=True)
     with open(results_filename, "w") as f:
         json.dump(results, f, indent=4)
 
     # --- CSV save (per-config file, no iteration suffix)
-    append_csv(results, engine=engine, device=device, samples=samples, date_str=current_date)
+    append_csv(results, engine=engine, device=output_device, samples=samples, date_str=current_date)
 
-    print("=== Benchmark finished ===")
+    print(f"=== {engine} Benchmark finished ===")
     return results
 
+
+def run_cycles_benchmark(
+    blender_path,
+    scene_path,
+    device="CPU",
+    samples=32,
+    reference_image=None,
+    iteration=1,
+):
+    extra_cmd_args = ["--cycles-device", device]
+    return _run_benchmark_base(
+        blender_path=blender_path,
+        engine="CYCLES",
+        device=device,
+        samples=samples,
+        scene_path=scene_path,
+        reference_image=reference_image,
+        iteration=iteration,
+        extra_cmd_args=extra_cmd_args,
+    )
+
+
+def run_eevee_benchmark(
+    blender_path,
+    scene_path,
+    samples=32,
+    reference_image=None,
+    iteration=1,
+    profile="MEDIUM",
+):
+    extra_cmd_args = [
+        "--profile", profile
+    ]
+
+    return _run_benchmark_base(
+        blender_path=blender_path,
+        engine="BLENDER_EEVEE",
+        device="GPU",
+        samples=samples,
+        scene_path=scene_path,
+        reference_image=reference_image,
+        iteration=iteration,
+        extra_cmd_args=extra_cmd_args
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Blender Benchmark Tool")
@@ -183,13 +230,26 @@ if __name__ == "__main__":
     parser.add_argument("--reference",
                         help="Path to reference PNG image for quality comparison")
     
+    parser.add_argument("--profile",
+                        choices=["LOW", "MEDIUM", "HIGH"],
+                        default="MEDIUM",
+                        help="Eevee quality profile")
+    
     args = parser.parse_args()
     
-    run_benchmark(
-        blender_path=args.blender_path,
-        scene_path=args.scene,
-        engine=args.engine,
-        device=args.device,
-        samples=args.samples,
-        reference_image=args.reference
-    )
+    if args.engine == "CYCLES":
+        run_cycles_benchmark(
+            blender_path=args.blender_path,
+            scene_path=args.scene,
+            device=args.device,
+            samples=args.samples,
+            reference_image=args.reference
+        )
+    elif args.engine == "BLENDER_EEVEE":
+        run_eevee_benchmark(
+            blender_path=args.blender_path,
+            scene_path=args.scene,
+            samples=args.samples,
+            reference_image=args.reference,
+            profile=args.profile
+        )

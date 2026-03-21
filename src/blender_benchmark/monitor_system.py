@@ -16,13 +16,11 @@ class SystemMonitor:
         self.ram_samples = []        # RAM usage [MB]
         self.gpu_samples = []        # GPU load [%]
 
-        # NVML initialization
         self.gpu_supported = False
         try:
             pynvml.nvmlInit()
             self.handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-            # Test if GPU utilization query is supported
-            util = pynvml.nvmlDeviceGetUtilizationRates(self.handle)
+            pynvml.nvmlDeviceGetUtilizationRates(self.handle)
             self.gpu_supported = True
             print("GPU monitoring: enabled")
         except Exception as e:

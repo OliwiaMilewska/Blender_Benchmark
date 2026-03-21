@@ -1,0 +1,15 @@
+blender_path: "/home/User/Blender/blender-5.0.0-linux-x64/blender"
+
+scene: "data/references/lightsaber.blend"
+
+engine: "CYCLES"
+
+cycles_settings:
+  device: "CPU"
+  samples: 64
+
+reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
+
+repeat: 10
+
+wait: 600
