@@ -20,9 +20,9 @@ class SystemMonitor:
         try:
             pynvml.nvmlInit()
             self.handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-            pynvml.nvmlDeviceGetUtilizationRates(self.handle)
+            name = pynvml.nvmlDeviceGetName(self.handle)
             self.gpu_supported = True
-            print("GPU monitoring: enabled")
+            print("GPU monitoring: enabled, detected:", name)
         except Exception as e:
             print(f"GPU monitoring: disabled ({e})")
             self.handle = None
