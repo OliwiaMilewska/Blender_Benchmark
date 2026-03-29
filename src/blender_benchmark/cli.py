@@ -267,6 +267,8 @@ Examples:
             print("❌ Error: --plot requires --engine, --device, and --samples")
             print("Example: python benchmarkCli.py --plot --engine CYCLES --device CPU --samples 64")
             return
+        if(args.engine == "BLENDER_EEVEE"):
+            args.device = "GPU"
         create_plots(args.engine, args.device, args.samples)
         return
     

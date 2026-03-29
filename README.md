@@ -12,6 +12,7 @@ Python script to benchmark and test rendering engines in Blender. Measure perfor
 - 🔄 **Batch Testing**: Run benchmarks multiple times for reliable results
 - ⚙️ **Config Management**: YAML configuration files with engine-specific sections
 - 📈 **Data Export**: JSON result formats
+- 📊 **Plot Generation**: Generate plots from results
 
 ## Requirements
 
@@ -168,23 +169,21 @@ python benchmarkCli.py --config config/custom.yaml
 
 ```
 Blender_Benchmark/
-├── benchmarkCli.py                    # Main benchmark script
+├── benchmark.py                    # Main benchmark script
 ├── benchmarkCli.py                 # CLI entry point
-├── monitor_system.py               # CPU/GPU monitoring
-├── monitor_vram.py                 # VRAM monitoring
-├── quality_metrics.py              # Image quality metrics (PSNR, SSIM)
 │
 ├── data/
 │   ├── references/
 │   │   └── ref/                    # Reference images for quality comparison
-│   └── renders/                    # Output: rendered images
+│   └── lightsaber.blend            # .blend files used for rendering
 │
 ├── output/                         # Generated results
 │   ├── results/                    # CSV and JSON data
+│   ├── renders/                    # Rendered PNG files
 │   └── plots/                      # Generated plots
 │
 ├── src/
-│   └── blender_benchmark/          # Package source
+│   └── blender_benchmark/
 │       ├── __init__.py
 │       ├── cli.py
 │       ├── monitor_system.py

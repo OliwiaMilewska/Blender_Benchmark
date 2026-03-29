@@ -18,7 +18,6 @@ def ensure_dirs():
     os.makedirs("output/results", exist_ok=True)
     os.makedirs("output/plots", exist_ok=True)
     os.makedirs("output/renders", exist_ok=True)
-    os.makedirs("results", exist_ok=True)
 
 
 def append_csv(row, engine, device, samples, date_str):
