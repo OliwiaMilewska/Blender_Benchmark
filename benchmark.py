@@ -80,27 +80,27 @@ def _run_benchmark_base(
     print(f"Reference: {reference_image}")
     print(f"Output: {output_path}")
 
-    # --- Start monitors ---
-    sys_monitor = SystemMonitor(process_name="blender")
+    cmd = [
+        blender_path,
+        "-b", scene_path
+    ]
+
+    script_name = "blender_cycles_render.py" if engine == "CYCLES" else "blender_eevee_render.py"
+    script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", script_name)
+    full_cmd = cmd + ["--python", script_path, "--", str(samples), output_path] + extra_cmd_args
+
+    print(f"Running command: {' '.join(full_cmd)}")
+    print("\n--- Blender Output ---")
+
+    blender_proc = subprocess.Popen(full_cmd)
+    sys_monitor = SystemMonitor(pid=blender_proc.pid)
     vram_monitor = VRAMMonitor()
 
     sys_monitor.start()
     vram_monitor.start()
 
-    # --- Rendering command ---
-    cmd = [
-        blender_path,
-        "-b", scene_path
-    ]
-    
-    script_name = "blender_cycles_render.py" if engine == "CYCLES" else "blender_eevee_render.py"
-    script_path = os.path.join(os.path.dirname(__file__), "src", "blender_benchmark", "blender_scripts", script_name)
-    cmd.extend(["--python", script_path, "--", str(samples), output_path] + extra_cmd_args)
-
-    print(f"Running command: {' '.join(cmd)}")
-    print("\n--- Blender Output ---")
     start_time = time.time()
-    subprocess.run(cmd)
+    blender_proc.wait()
     end_time = time.time()
     print("--- End Blender Output ---\n")
 
@@ -122,7 +122,6 @@ def _run_benchmark_base(
     if reference_image:
         psnr_value = compute_psnr(rendered_image, reference_image)
         ssim_value = compute_ssim(rendered_image, reference_image)
-        print(f"Quality metrics: PSNR={psnr_value:.2f}, SSIM={ssim_value:.4f}")
 
     # --- Metrics collection ---
     results = {
@@ -131,15 +130,15 @@ def _run_benchmark_base(
         "device": device,
         "samples": samples if samples else "default",
         "scene": os.path.basename(scene_path),
-        "render_time_sec": render_time,
-        "cpu_time_sec": sys_metrics["cpu_time_sec"],
-        "cpu_intensity": sys_metrics["cpu_intensity"],
-        "cpu_noise_std": sys_metrics["cpu_noise_std"],
-        "gpu_avg_percent": sys_metrics["gpu_avg_percent"],
-        "ram_max_mb": sys_metrics["ram_max_mb"],
-        "vram_max_mb": vram_max,
-        "psnr": psnr_value,
-        "ssim": ssim_value
+        "render_time_sec": round(render_time, 2),
+        "cpu_time_sec": round(sys_metrics["cpu_time_sec"], 2),
+        "cpu_intensity": round(sys_metrics["cpu_intensity"], 2),
+        "cpu_noise_std": round(sys_metrics["cpu_noise_std"], 2),
+        "gpu_avg_percent": round(sys_metrics["gpu_avg_percent"], 2),
+        "ram_max_mb": round(sys_metrics["ram_max_mb"], 2),
+        "vram_max_mb": round(vram_max, 2),
+        "psnr": round(psnr_value, 4),
+        "ssim": round(ssim_value, 4)
     }
 
     print(json.dumps(results, indent=4))

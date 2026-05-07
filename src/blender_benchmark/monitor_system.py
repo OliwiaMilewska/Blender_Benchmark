@@ -6,8 +6,9 @@ import pynvml
 
 
 class SystemMonitor:
-    def __init__(self, process_name="blender", interval=0.2):
-        self.process_name = process_name.lower()
+    def __init__(self, process_name="blender", pid=None, interval=0.2):
+        self.process_name = process_name.lower() if process_name else None
+        self.pid = pid
         self.interval = interval
         self.running = False
 
@@ -28,6 +29,13 @@ class SystemMonitor:
             self.handle = None
 
     def _find_process(self):
+        if self.pid is not None:
+            try:
+                proc = psutil.Process(self.pid)
+                return proc
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                return None
+
         for p in psutil.process_iter(['name']):
             try:
                 if p.info['name'] and self.process_name in p.info['name'].lower():
