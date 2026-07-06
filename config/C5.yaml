@@ -6,9 +6,9 @@ engine: "CYCLES"
 
 cycles_settings:
   device: "GPU"
-  samples: 32
+  samples: 128
 
-reference: "data/references/ref/cubes_Cycles_GPU_32.png"
+reference: "data/references/ref/cubes_Cycles_GPU_128.png"
 
 repeat: 10
 

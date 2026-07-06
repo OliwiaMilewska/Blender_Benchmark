@@ -1,14 +1,14 @@
 blender_path: "/home/oliwialinux/Documents/blender-5.1.2-linux-x64/blender"
 
-scene: "data/references/lightsaber.blend"
+scene: "data/references/cubes.blend"
 
 engine: "BLENDER_EEVEE"
 
 eevee_settings:
-  profile: "LOW"
-  samples: 4
+  profile: "HIGH"
+  samples: 16
 
-reference: "data/references/ref/lightsaber_Eevee_4.png"
+reference: "data/references/ref/cubes_Eevee_16.png"
 
 repeat: 10
 

@@ -1,14 +1,14 @@
 blender_path: "/home/oliwialinux/Documents/blender-5.1.2-linux-x64/blender"
 
-scene: "data/references/cubes.blend"
+scene: "data/references/apartment.blend"
 
 engine: "CYCLES"
 
 cycles_settings:
-  device: "GPU"
+  device: "CPU"
   samples: 32
 
-reference: "data/references/ref/cubes_Cycles_GPU_32.png"
+reference: "data/references/ref/apartment_Cycles_CPU_32.png"
 
 repeat: 10
 

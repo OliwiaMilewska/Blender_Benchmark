@@ -5,10 +5,10 @@ scene: "data/references/cubes.blend"
 engine: "CYCLES"
 
 cycles_settings:
-  device: "GPU"
-  samples: 32
+  device: "CPU"
+  samples: 512
 
-reference: "data/references/ref/cubes_Cycles_GPU_32.png"
+reference: "data/references/ref/cubes_Cycles_CPU_512.png"
 
 repeat: 10
 
