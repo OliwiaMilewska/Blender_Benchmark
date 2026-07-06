@@ -8,7 +8,7 @@ eevee_settings:
   profile: "HIGH"
   samples: 16
 
-reference: "data/references/ref/cubes_Eevee_16.png"
+reference: "data/references/ref/cubes_Eevee_ref.png"
 
 repeat: 10
 

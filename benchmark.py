@@ -14,10 +14,25 @@ from blender_benchmark.monitor_system import SystemMonitor
 from blender_benchmark.monitor_vram import VRAMMonitor
 from blender_benchmark.quality_metrics import compute_psnr, compute_ssim
 
+REF_DIR = "data/references/ref"
+
+
 def ensure_dirs():
     os.makedirs("output/results", exist_ok=True)
     os.makedirs("output/plots", exist_ok=True)
     os.makedirs("output/renders", exist_ok=True)
+
+
+def resolve_reference_path(scene_path, engine, device="CPU", ref_dir=REF_DIR):
+    """Build path to ground-truth reference image (max quality, _ref suffix)."""
+    scene_name = os.path.splitext(os.path.basename(scene_path))[0]
+    if engine == "CYCLES":
+        filename = f"{scene_name}_Cycles_{device}_ref.png"
+    elif engine == "BLENDER_EEVEE":
+        filename = f"{scene_name}_Eevee_ref.png"
+    else:
+        return None
+    return os.path.join(ref_dir, filename)
 
 
 def append_csv(row, engine, device, samples, date_str):
@@ -120,8 +135,11 @@ def _run_benchmark_base(
     psnr_value = None
     ssim_value = None
     if reference_image:
-        psnr_value = compute_psnr(rendered_image, reference_image)
-        ssim_value = compute_ssim(rendered_image, reference_image)
+        if not os.path.isfile(reference_image):
+            print(f"Warning: reference image not found: {reference_image}")
+        else:
+            psnr_value = compute_psnr(rendered_image, reference_image)
+            ssim_value = compute_ssim(rendered_image, reference_image)
 
     # --- Metrics collection ---
     results = {
@@ -137,8 +155,8 @@ def _run_benchmark_base(
         "gpu_avg_percent": round(sys_metrics["gpu_avg_percent"], 2),
         "ram_max_mb": round(sys_metrics["ram_max_mb"], 2),
         "vram_max_mb": round(vram_max, 2),
-        "psnr": round(psnr_value, 4),
-        "ssim": round(ssim_value, 4)
+        "psnr": round(psnr_value, 4) if psnr_value is not None else None,
+        "ssim": round(ssim_value, 4) if ssim_value is not None else None,
     }
 
     print(json.dumps(results, indent=4))

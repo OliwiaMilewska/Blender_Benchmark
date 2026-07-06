@@ -164,7 +164,7 @@ scene: "data/references/lightsaber.blend"
 engine: "CYCLES"
 device: "CPU"
 samples: 64
-reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
+# reference auto-resolved: data/references/ref/lightsaber_Cycles_CPU_ref.png
 repeat: 1
 wait: 600
 """
@@ -307,19 +307,25 @@ Examples:
         except ImportError as e:
             print(f"❌ Error reading config file: {e}")
             return
-    
-    
+
     _sys.path.insert(0, os.path.dirname(__file__))
     root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     _sys.path.insert(0, root_dir)
-    
+
     try:
-        from benchmark import run_cycles_benchmark, run_eevee_benchmark
+        from benchmark import run_cycles_benchmark, run_eevee_benchmark, resolve_reference_path
     except ImportError as e:
         print(f"❌ Error importing benchmark functions: {e}")
         print("Make sure benchmark.py exists in the root directory")
         return
-    
+
+    if args.scene and not args.reference:
+        ref_device = args.device
+        if args.engine == "BLENDER_EEVEE":
+            ref_device = "GPU"
+        args.reference = resolve_reference_path(args.scene, args.engine, ref_device)
+        print(f"Reference (auto): {args.reference}")
+
     # Run benchmark with repeat option
     print(f"\n🔄 Running benchmark {args.repeat} time(s)...\n")
     

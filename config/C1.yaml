@@ -8,7 +8,7 @@ cycles_settings:
   device: "CPU"
   samples: 32
 
-reference: "data/references/ref/cubes_Cycles_CPU_32.png"
+reference: "data/references/ref/cubes_Cycles_CPU_ref.png"
 
 repeat: 10
 

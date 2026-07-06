@@ -1,15 +1,15 @@
-blender_path: "/home/oliwialinux/Documents/blender-5.1.2-linux-x64/blender"
+blender_path: "C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe"
 
 scene: "data/references/cubes.blend"
 
 engine: "BLENDER_EEVEE"
 
 eevee_settings:
-  profile: "MEDIUM"
-  samples: 8
+  profile: "LOW"
+  samples: 4
 
 reference: "data/references/ref/cubes_Eevee_ref.png"
 
-repeat: 10
+repeat: 1
 
 wait: 600

@@ -8,7 +8,7 @@ eevee_settings:
   profile: "MEDIUM"
   samples: 8
 
-reference: "data/references/ref/apartment_Eevee_8.png"
+reference: "data/references/ref/apartment_Eevee_ref.png"
 
 repeat: 10
 
