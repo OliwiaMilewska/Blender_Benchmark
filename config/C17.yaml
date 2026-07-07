@@ -5,7 +5,7 @@ scene: "data/references/bakery.blend"
 engine: "CYCLES"
 
 cycles_settings:
-  device: "GPU"
+  device: "CUDA"
   samples: 128
 
 reference: "data/references/ref/bakery_Cycles_GPU_ref.png"

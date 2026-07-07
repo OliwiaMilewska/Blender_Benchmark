@@ -5,7 +5,7 @@ scene: "data/references/lightsaber.blend"
 engine: "CYCLES"
 
 cycles_settings:
-  device: "GPU"
+  device: "CUDA"
   samples: 128
 
 reference: "data/references/ref/lightsaber_Cycles_GPU_ref.png"

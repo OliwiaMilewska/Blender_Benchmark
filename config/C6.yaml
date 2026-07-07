@@ -5,7 +5,7 @@ scene: "data/references/cubes.blend"
 engine: "CYCLES"
 
 cycles_settings:
-  device: "GPU"
+  device: "CUDA"
   samples: 512
 
 reference: "data/references/ref/cubes_Cycles_GPU_ref.png"
