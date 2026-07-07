@@ -96,13 +96,41 @@ def create_plots(engine, device, samples):
         col = idx % 3
         ax = fig.add_subplot(gs[row, col])
         values = metric_lists[idx]
-        
-        ax.plot(iters, values, marker="o", linewidth=2, markersize=6)
-        ax.set_title(title, fontweight="bold")
-        ax.set_xlabel("Iteration")
-        ax.set_ylabel(ylabel)
-        ax.grid(True, alpha=0.3)
-        ax.set_xticks(iters)
+
+        if metric_key in ("psnr", "ssim"):
+            latest = values[-1]
+            stable = len(set(values)) == 1
+            ax.text(0.5, 0.55, title, ha="center", va="center", fontsize=14, fontweight="bold")
+            ax.text(0.5, 0.35, f"Value: {latest:.4f}", ha="center", va="center", fontsize=12)
+            if stable:
+                ax.text(0.5, 0.18, "Stable across iterations", ha="center", va="center", fontsize=10, color="gray")
+            else:
+                ax.text(0.5, 0.18, f"Range: {min(values):.4f} — {max(values):.4f}", ha="center", va="center", fontsize=10, color="gray")
+            ax.axis("off")
+        else:
+            ax.plot(iters, values, marker="o", linewidth=2, markersize=6)
+            ax.set_title(title, fontweight="bold")
+            ax.set_xlabel("Iteration")
+            ax.set_ylabel(ylabel)
+            ax.grid(True, alpha=0.3)
+            ax.set_xticks(iters)
+
+            y_min = min(values)
+            y_max = max(values)
+            y_range = y_max - y_min
+            if metric_key == "gpu_avg_percent":
+                y_lower = max(0, y_min - 5)
+                y_upper = min(100, y_max + 5)
+            else:
+                if y_range == 0:
+                    y_margin = abs(y_max) * 0.05 if y_max != 0 else 1
+                else:
+                    y_margin = max(y_range * 0.1, abs(y_max) * 0.01, 0.01)
+                y_lower = y_min - y_margin
+                y_upper = y_max + y_margin
+                if y_lower >= 0:
+                    y_lower = max(0, y_lower)
+            ax.set_ylim(y_lower, y_upper)
     
     # Save plot
     output_filename = f"{engine}_{device}_{samples}.png"
