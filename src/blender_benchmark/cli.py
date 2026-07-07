@@ -13,6 +13,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+
+def build_iteration_plan(repeat=1):
+    """Return execution plan for benchmark runs, with one warmup run plus the requested number of measurements."""
+    if repeat <= 0:
+        return []
+    return ["warmup"] + ["measurement"] * repeat
+
+
 def create_plots(engine, device, samples):
     """
     Create a 3x3 grid of metric plots from CSV/JSON result files.
@@ -354,16 +362,28 @@ Examples:
         args.reference = resolve_reference_path(args.scene, args.engine, ref_device)
         print(f"Reference (auto): {args.reference}")
 
+    iteration_plan = build_iteration_plan(args.repeat)
+
     # Run benchmark with repeat option
-    print(f"\n🔄 Running benchmark {args.repeat} time(s)...\n")
-    
-    for i in range(args.repeat):
-        run_iter = i + 1
-        if args.repeat > 1:
+    print(f"\n🔄 Running benchmark {args.repeat} time(s), with the first run treated as warmup...\n")
+
+    measurement_iteration = 0
+    for index, stage in enumerate(iteration_plan, start=1):
+        if len(iteration_plan) > 1:
             print(f"\n{'='*60}")
-            print(f"Run {run_iter}/{args.repeat}")
+            print(f"{stage.capitalize()} run {index}/{len(iteration_plan)}")
             print(f"{'='*60}\n")
-        
+
+        if stage == "warmup":
+            print("🔥 Warmup run: this iteration will not be included in the reported measurements.")
+            iteration_value = 0
+            store_results = False
+        else:
+            measurement_iteration += 1
+            iteration_value = measurement_iteration
+            store_results = True
+            print("📏 Measurement run: this iteration will be included in the reported results.")
+
         if args.engine == "CYCLES":
             run_cycles_benchmark(
                 blender_path=args.blender_path,
@@ -371,7 +391,8 @@ Examples:
                 device=args.device,
                 samples=args.samples,
                 reference_image=args.reference,
-                iteration=run_iter
+                iteration=iteration_value,
+                store_results=store_results
             )
         elif args.engine == "BLENDER_EEVEE":
             run_eevee_benchmark(
@@ -379,19 +400,20 @@ Examples:
                 scene_path=args.scene,
                 samples=args.samples,
                 reference_image=args.reference,
-                iteration=run_iter,
+                iteration=iteration_value,
+                store_results=store_results,
                 profile=args.profile
             )
 
-        if args.repeat > 1 and run_iter < args.repeat:
+        if len(iteration_plan) > 1 and index < len(iteration_plan):
             wait_seconds = max(0, args.wait)
             print(f"⏳ Waiting {wait_seconds} seconds before next iteration...")
 
             for _ in tqdm(range(wait_seconds), desc="Idle time", unit="s", leave=False):
                 time.sleep(1)
-    
-    if args.repeat > 1:
-        print(f"\n✓ All {args.repeat} runs completed!")
+
+    if len(iteration_plan) > 1:
+        print(f"\n✓ All {len(iteration_plan)} runs completed, with the warmup excluded from measurements.")
 
 
 def print_commands():

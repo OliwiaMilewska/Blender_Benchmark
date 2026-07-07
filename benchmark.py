@@ -71,6 +71,7 @@ def _run_benchmark_base(
     iteration,
     extra_cmd_args=None,
     output_device=None,
+    store_results=True,
 ):
     """Base benchmark function. """
     if extra_cmd_args is None:
@@ -161,16 +162,19 @@ def _run_benchmark_base(
 
     print(json.dumps(results, indent=4))
 
-    # --- JSON save ---
-    current_date = datetime.now().strftime("%Y%m%d")
+    if store_results:
+        # --- JSON save ---
+        current_date = datetime.now().strftime("%Y%m%d")
 
-    results_filename = f"output/results/{current_date}_{engine}_{output_device}_{samples}_{iteration}.json"
-    os.makedirs(os.path.dirname(results_filename), exist_ok=True)
-    with open(results_filename, "w") as f:
-        json.dump(results, f, indent=4)
+        results_filename = f"output/results/{current_date}_{engine}_{output_device}_{samples}_{iteration}.json"
+        os.makedirs(os.path.dirname(results_filename), exist_ok=True)
+        with open(results_filename, "w") as f:
+            json.dump(results, f, indent=4)
 
-    # --- CSV save (per-config file, no iteration suffix)
-    append_csv(results, engine=engine, device=output_device, samples=samples, date_str=current_date)
+        # --- CSV save (per-config file, no iteration suffix)
+        append_csv(results, engine=engine, device=output_device, samples=samples, date_str=current_date)
+    else:
+        print("Warmup run: skipping persistence of benchmark results.")
 
     print(f"=== {engine} Benchmark finished ===")
     return results
@@ -183,6 +187,7 @@ def run_cycles_benchmark(
     samples=32,
     reference_image=None,
     iteration=1,
+    store_results=True,
 ):
     extra_cmd_args = ["--cycles-device", device]
     return _run_benchmark_base(
@@ -194,6 +199,7 @@ def run_cycles_benchmark(
         reference_image=reference_image,
         iteration=iteration,
         extra_cmd_args=extra_cmd_args,
+        store_results=store_results,
     )
 
 
@@ -204,6 +210,7 @@ def run_eevee_benchmark(
     reference_image=None,
     iteration=1,
     profile="MEDIUM",
+    store_results=True,
 ):
     extra_cmd_args = [
         "--profile", profile
@@ -217,7 +224,8 @@ def run_eevee_benchmark(
         scene_path=scene_path,
         reference_image=reference_image,
         iteration=iteration,
-        extra_cmd_args=extra_cmd_args
+        extra_cmd_args=extra_cmd_args,
+        store_results=store_results,
     )
 
 if __name__ == "__main__":
