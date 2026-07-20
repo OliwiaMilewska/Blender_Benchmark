@@ -128,7 +128,7 @@ def _run_benchmark_base(
 
     blender_proc = subprocess.Popen(full_cmd)
     sys_monitor = SystemMonitor(pid=blender_proc.pid)
-    vram_monitor = VRAMMonitor()
+    vram_monitor = VRAMMonitor(pid=blender_proc.pid)
 
     sys_monitor.start()
     vram_monitor.start()
@@ -198,7 +198,7 @@ def _run_benchmark_base(
         "gpu_avg_percent": round(sys_metrics.get("gpu_avg_percent", 0), 2),
         "vram_max_mb": round(vram_max, 2),
         "ram_max_mb": round(sys_metrics.get("ram_max_mb", 0), 2),
-        "psnr": round(psnr_value, 4) if psnr_value is not None else None,
+        "psnr": round(psnr_value, 2) if psnr_value is not None else None,
         "ssim": round(ssim_value, 4) if ssim_value is not None else None,
     }
 

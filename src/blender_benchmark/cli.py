@@ -112,17 +112,13 @@ def create_plots(engine, device, samples):
         col = idx % 3
         ax = fig.add_subplot(gs[row, col])
 
-        # PSNR / SSIM: display as single value when stable
+        # PSNR / SSIM
         if metric_key in ("psnr", "ssim"):
             values = metric_map.get(metric_key, [])
             latest = values[-1] if values else 0
-            stable = len(set(values)) == 1 if values else True
+            mean_orig = sum(values) / len(values) if values else 0
             ax.text(0.5, 0.55, title, ha="center", va="center", fontsize=14, fontweight="bold")
-            ax.text(0.5, 0.35, f"Value: {latest:.4f}", ha="center", va="center", fontsize=12)
-            if stable:
-                ax.text(0.5, 0.18, "Stable across iterations", ha="center", va="center", fontsize=10, color="gray")
-            else:
-                ax.text(0.5, 0.18, f"Range: {min(values):.4f} — {max(values):.4f}", ha="center", va="center", fontsize=10, color="gray")
+            ax.text(0.5, 0.40, f"Value: {latest:.4f}", ha="center", va="center", fontsize=14)
             ax.axis("off")
             continue
 
@@ -155,13 +151,28 @@ def create_plots(engine, device, samples):
                 ax.text(0.02, 0.95, f"mean={mean_orig:.3g}", transform=ax.transAxes, fontsize=9, va="top")
             continue
 
-        if metric_key in ("ram_max_mb", "vram_max_mb"):
+        if metric_key in ("ram_max_mb"):
+            if values:
+                vmin = min(values)
+                vmax = max(values)
+                y_lower = max(0, vmin - 5)
+                y_upper = vmax + 5
+                ax.set_ylim(y_lower, y_upper)
+                mean_orig = sum(values) / len(values)
+                ax.text(0.02, 0.95, f"mean={mean_orig:.2f}", transform=ax.transAxes, fontsize=9, va="top")
+            else:
+                ax.set_ylim(0, 1)
+            continue
+
+        if metric_key in ("vram_max_mb"):
             if values:
                 vmin = min(values)
                 vmax = max(values)
                 y_lower = max(0, vmin - 0.5)
                 y_upper = vmax + 0.5
                 ax.set_ylim(y_lower, y_upper)
+                mean_orig = sum(values) / len(values)
+                ax.text(0.02, 0.95, f"mean={mean_orig:.2f}", transform=ax.transAxes, fontsize=9, va="top")
             else:
                 ax.set_ylim(0, 1)
             continue
