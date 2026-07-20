@@ -23,20 +23,20 @@ def build_iteration_plan(repeat=1):
 
 def create_plots(engine, device, samples):
     """
-    Create a 3x3 grid of metric plots from CSV/JSON result files.
+    Create a 3x3 grid of metric plots from JSON result files.
     Saves to output/plots/{engine}_{device}_{samples}.png
     """
     results_dir = Path("output/results")
     plots_dir = Path("output/plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
-    
+
     pattern = f"*_{engine}_{device}_{samples}_*.json"
     json_files = sorted(results_dir.glob(pattern))
-    
+
     if not json_files:
         print(f"❌ No JSON files found for {engine}_{device}_{samples}")
         return
-    
+
     # Prepare containers
     data = {
         "iteration": [],
@@ -50,7 +50,7 @@ def create_plots(engine, device, samples):
         "psnr": [],
         "ssim": []
     }
-    
+
     for json_file in json_files:
         try:
             text = json_file.read_text().strip()
@@ -72,16 +72,16 @@ def create_plots(engine, device, samples):
         except Exception as e:
             print(f"⚠️  Error reading {json_file}: {e}")
             continue
-    
+
     if not data["iteration"]:
         print(f"❌ Could not read any valid data from JSON files")
         return
-    
+
     # Create 3x3 grid of plots
     fig = plt.figure(figsize=(15, 12))
     fig.suptitle(f"{engine}-{device}-{samples} samples-{clean.get('scene', 0)}", fontsize=16, fontweight="bold")
     gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.3, wspace=0.3)
-    
+
     metrics = [
         ("render_time_sec", "Render Time (s)", "Time"),
         ("cpu_time_sec", "CPU Time (s)", "Time"),
@@ -93,21 +93,30 @@ def create_plots(engine, device, samples):
         ("psnr", "PSNR", "dB"),
         ("ssim", "SSIM", "Similarity")
     ]
-    
+
     # ensure data sorted by iteration
     sorted_pairs = sorted(zip(data["iteration"], *[data[k] for k,_,_ in metrics]))
     # unzip sorted
     iters, *metric_lists = zip(*sorted_pairs)
-    
+    metric_lists = [list(m) for m in metric_lists]
+
+    # Map metric key to its values for easier processing
+    metric_map = {metrics[i][0]: metric_lists[i] for i in range(len(metrics))}
+
+    # Apply explicit y-axis rules requested by user:
+    # - For time metrics and CPU/GPU noise/intensity: lower = max(0, min-5), upper = max+5
+    # - For RAM/VRAM: lower = max(0, min-200), upper = max+200
+    # We'll compute these on the fly below.
     for idx, (metric_key, title, ylabel) in enumerate(metrics):
         row = idx // 3
         col = idx % 3
         ax = fig.add_subplot(gs[row, col])
-        values = metric_lists[idx]
 
+        # PSNR / SSIM: display as single value when stable
         if metric_key in ("psnr", "ssim"):
-            latest = values[-1]
-            stable = len(set(values)) == 1
+            values = metric_map.get(metric_key, [])
+            latest = values[-1] if values else 0
+            stable = len(set(values)) == 1 if values else True
             ax.text(0.5, 0.55, title, ha="center", va="center", fontsize=14, fontweight="bold")
             ax.text(0.5, 0.35, f"Value: {latest:.4f}", ha="center", va="center", fontsize=12)
             if stable:
@@ -115,14 +124,54 @@ def create_plots(engine, device, samples):
             else:
                 ax.text(0.5, 0.18, f"Range: {min(values):.4f} — {max(values):.4f}", ha="center", va="center", fontsize=10, color="gray")
             ax.axis("off")
-        else:
-            ax.plot(iters, values, marker="o", linewidth=2, markersize=6)
-            ax.set_title(title, fontweight="bold")
-            ax.set_xlabel("Iteration")
-            ax.set_ylabel(ylabel)
-            ax.grid(True, alpha=0.3)
-            ax.set_xticks(iters)
+            continue
 
+        # Plotting rules for specific metric groups
+        values = metric_map.get(metric_key, [])
+        ax.plot(iters, values, marker="o", linewidth=2, markersize=6)
+        ax.set_title(title, fontweight="bold")
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel(ylabel)
+        ax.grid(True, alpha=0.3)
+        ax.set_xticks(iters)
+
+        # Apply user-requested axis rules
+        if metric_key in ("render_time_sec", "cpu_time_sec", "cpu_intensity", "cpu_noise_std", "gpu_avg_percent"):
+            if values:
+                vmin = min(values)
+                vmax = max(values)
+                y_lower = max(0, vmin - 5)
+                y_upper = vmax + 5
+                ax.set_ylim(y_lower, y_upper)
+            else:
+                ax.set_ylim(0, 1)
+            # show mean in corner
+            if values:
+                mean_orig = sum(values) / len(values)
+                ax.text(0.02, 0.95, f"mean={mean_orig:.3g}", transform=ax.transAxes, fontsize=9, va="top")
+            continue
+
+        if metric_key in ("ram_max_mb", "vram_max_mb"):
+            if values:
+                vmin = min(values)
+                vmax = max(values)
+                y_lower = max(0, vmin - 200)
+                y_upper = vmax + 200
+                ax.set_ylim(y_lower, y_upper)
+            else:
+                ax.set_ylim(0, 1)
+            continue
+
+        # Default plotting for other metrics (tighter margins)
+        values = metric_map.get(metric_key, [])
+        ax.plot(iters, values, marker="o", linewidth=2, markersize=6)
+        ax.set_title(title, fontweight="bold")
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel(ylabel)
+        ax.grid(True, alpha=0.3)
+        ax.set_xticks(iters)
+
+        if values:
             y_min = min(values)
             y_max = max(values)
             y_range = y_max - y_min
@@ -133,13 +182,15 @@ def create_plots(engine, device, samples):
                 if y_range == 0:
                     y_margin = abs(y_max) * 0.05 if y_max != 0 else 1
                 else:
-                    y_margin = max(y_range * 0.1, abs(y_max) * 0.01, 0.01)
+                    y_margin = max(y_range * 0.08, abs(y_max) * 0.01, 0.01)
                 y_lower = y_min - y_margin
                 y_upper = y_max + y_margin
                 if y_lower >= 0:
                     y_lower = max(0, y_lower)
             ax.set_ylim(y_lower, y_upper)
-    
+        else:
+            ax.set_ylim(0, 1)
+
     # Save plot
     output_filename = f"{engine}_{device}_{samples}.png"
     output_path = plots_dir / output_filename
@@ -152,19 +203,19 @@ def delete_results():
     """Delete old results, plots, and renders."""
     output_path = Path("output")
     data_path = Path("output/renders")
-    
+
     deleted_items = []
-    
+
     # Delete output directory
     if output_path.exists():
         shutil.rmtree(output_path)
         deleted_items.append("✓ Deleted output/ directory")
-    
+
     # Delete renders
     if data_path.exists():
         shutil.rmtree(data_path)
         deleted_items.append("✓ Deleted output/renders/ directory")
-    
+
     if deleted_items:
         print("Results deleted successfully:")
         for item in deleted_items:
@@ -176,15 +227,15 @@ def delete_results():
 def load_config(config_file):
     """Load configuration from YAML file."""
     config_path = Path(config_file)
-    
+
     if not config_path.exists():
         print(f"❌ Config file not found: {config_file}")
         return None
-    
+
     try:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
-        
+
         print(f"✓ Config loaded from {config_file}")
         return config
     except Exception as e:
@@ -204,13 +255,13 @@ samples: 64
 repeat: 1
 wait: 600
 """
-    
+
     config_dir = Path("config")
     config_dir.mkdir(exist_ok=True)
-    
+
     with open(config_dir / "example.yaml", 'w') as f:
         f.write(example_yaml)
-    
+
     print("✓ Example config file created: config/example.yaml")
 
 
@@ -228,50 +279,50 @@ Examples:
   python benchmarkCli.py --create-example-config
   python benchmarkCli.py --plot --engine CYCLES --device CPU --samples 64
 """)
-    
+
     # Configuration
     parser.add_argument("--config", 
                         help="Load configuration from YAML file")
-    
+
     parser.add_argument("--create-example-config", 
                         action="store_true",
                         help="Create example configuration files")
-    
+
     # Delete results
     parser.add_argument("--delete-results", 
                         action="store_true",
                         help="Delete old results, plots, and renders")
-    
+
     # Plot creation
     parser.add_argument("--plot", 
                         action="store_true",
                         help="Create plots from benchmark results")
-    
+
     # Benchmark parameters
     parser.add_argument("--blender-path", 
                         default="/home/intel/Blender/blender-5.0.0-linux-x64/blender",
                         help="Path to Blender executable")
-    
+
     parser.add_argument("--scene", 
                         help="Path to .blend file")
-    
+
     parser.add_argument("--engine", 
                         choices=["CYCLES", "BLENDER_EEVEE"],
                         default="CYCLES",
                         help="Render engine (default: CYCLES)")
-    
+
     parser.add_argument("--device",
                         choices=["CPU", "CUDA", "OPTIX", "OPENCL"],
                         default="CPU",
                         help="Render device (default: CPU)")
-    
+
     parser.add_argument("--samples", 
                         type=int,
                         help="Number of samples (e.g. 64, 256, 512)")
-    
+
     parser.add_argument("--reference",
                         help="Path to reference PNG image for quality comparison")
-    
+
     # Repeat option
     parser.add_argument("--repeat", 
                         type=int, 
@@ -283,19 +334,19 @@ Examples:
                         type=int,
                         default=600,
                         help="Delay in seconds between benchmark iterations (default: 600)")
-    
+
     # Show help
     parser.add_argument("--commands", 
                         action="store_true",
                         help="Show all available commands")
-    
+
     args = parser.parse_args()
-    
+
     # Handle --commands
     if args.commands:
         print_commands()
         return
-    
+
     # Handle --plot
     if args.plot:
         # Require engine, device, and samples for plot creation
@@ -307,17 +358,17 @@ Examples:
             args.device = "GPU"
         create_plots(args.engine, args.device, args.samples)
         return
-    
+
     # Handle --create-example-config
     if args.create_example_config:
         create_example_config()
         return
-    
+
     # Handle --delete-results
     if args.delete_results:
         delete_results()
         return
-    
+
     # Load config if provided
     if args.config:
         try:
