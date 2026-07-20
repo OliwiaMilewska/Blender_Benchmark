@@ -46,15 +46,15 @@ def main():
     print(f"Using profile: {profile}")
 
     if profile == "LOW":
-        scene.eevee.shadow_pool_size = '512'
+        scene.eevee.shadow_pool_size = '256'
         scene.eevee.taa_render_samples = 4
 
     elif profile == "MEDIUM":
-        scene.eevee.shadow_pool_size = '1024'
+        scene.eevee.shadow_pool_size = '512'
         scene.eevee.taa_render_samples = 8
 
     else:  # HIGH
-        scene.eevee.shadow_pool_size = '2048'
+        scene.eevee.shadow_pool_size = '1024'
         scene.eevee.taa_render_samples = 16
 
     # --- OUTPUT ---
