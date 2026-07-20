@@ -1,7 +1,6 @@
 import psutil
 import time
 import threading
-import statistics
 import pynvml
 
 
@@ -16,6 +15,7 @@ class SystemMonitor:
         self.cpu_time_samples = []   # CPU time [sec]
         self.ram_samples = []        # RAM usage [MB]
         self.gpu_samples = []        # GPU load [%]
+        self._cpu_initialized = False
 
         self.gpu_supported = False
         try:
@@ -59,6 +59,14 @@ class SystemMonitor:
                     self.cpu_time_samples.append(cpu_time)
 
                     # --- CPU UTIL ---
+                    # Ensure we initialize cpu_percent sampling for this process
+                    # to avoid the first bogus value returned by psutil.
+                    if not self._cpu_initialized:
+                        try:
+                            proc.cpu_percent(interval=None)
+                        except Exception:
+                            pass
+                        self._cpu_initialized = True
                     cpu_percent = proc.cpu_percent(interval=None)
                     self.cpu_util_samples.append(cpu_percent)
 
@@ -93,7 +101,6 @@ class SystemMonitor:
             return {
                 "cpu_time_sec": 0,
                 "cpu_intensity": 0,
-                "cpu_noise_std": 0,
                 "gpu_avg_percent": 0,
                 "ram_max_mb": 0
             }
@@ -107,13 +114,11 @@ class SystemMonitor:
         # --- CPU intensity ---
         cpu_intensity = cpu_time_sec / render_duration if render_duration > 0 else 0
 
-        # --- CPU utilization standard deviation ---
-        cpu_noise_std = statistics.stdev(self.cpu_util_samples) if len(self.cpu_util_samples) > 1 else 0
+        # We no longer compute CPU noise std; keep only time/intensity info.
 
         return {
             "cpu_time_sec": cpu_time_sec,
             "cpu_intensity": cpu_intensity,
-            "cpu_noise_std": cpu_noise_std,
             "gpu_avg_percent": sum(self.gpu_samples) / len(self.gpu_samples) if self.gpu_samples else 0,
             "ram_max_mb": max(self.ram_samples) if self.ram_samples else 0
         }

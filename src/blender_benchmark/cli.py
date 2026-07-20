@@ -41,9 +41,9 @@ def create_plots(engine, device, samples):
     data = {
         "iteration": [],
         "render_time_sec": [],
-        "cpu_time_sec": [],
         "cpu_intensity": [],
-        "cpu_noise_std": [],
+        "system_overhead_sec": [],
+        "system_overhead_percent": [],
         "gpu_avg_percent": [],
         "ram_max_mb": [],
         "vram_max_mb": [],
@@ -59,9 +59,9 @@ def create_plots(engine, device, samples):
 
             data["iteration"].append(int(clean["iteration"]))
             data["render_time_sec"].append(float(clean.get("render_time_sec", 0)))
-            data["cpu_time_sec"].append(float(clean.get("cpu_time_sec", 0)))
             data["cpu_intensity"].append(float(clean.get("cpu_intensity", 0)))
-            data["cpu_noise_std"].append(float(clean.get("cpu_noise_std", 0)))
+            data["system_overhead_sec"].append(float(clean.get("system_overhead_sec", 0)))
+            data["system_overhead_percent"].append(float(clean.get("system_overhead_percent", 0)))
             data["gpu_avg_percent"].append(float(clean.get("gpu_avg_percent", 0)))
             data["ram_max_mb"].append(float(clean.get("ram_max_mb", 0)))
             data["vram_max_mb"].append(float(clean.get("vram_max_mb", 0)))
@@ -84,12 +84,12 @@ def create_plots(engine, device, samples):
 
     metrics = [
         ("render_time_sec", "Render Time (s)", "Time"),
-        ("cpu_time_sec", "CPU Time (s)", "Time"),
         ("cpu_intensity", "CPU Intensity", "Ratio"),
-        ("cpu_noise_std", "CPU Noise Std Dev", "Value"),
+        ("system_overhead_sec", "System Overhead (s)", "Time"),
+        ("system_overhead_percent", "System Overhead (%)", "Percent"),
         ("gpu_avg_percent", "GPU Avg Usage (%)", "Percent"),
-        ("ram_max_mb", "RAM Max (MB)", "Memory"),
         ("vram_max_mb", "VRAM Max (MB)", "Memory"),
+        ("ram_max_mb", "RAM Max (MB)", "Memory"),
         ("psnr", "PSNR", "dB"),
         ("ssim", "SSIM", "Similarity")
     ]
@@ -105,7 +105,7 @@ def create_plots(engine, device, samples):
 
     # Apply explicit y-axis rules requested by user:
     # - For time metrics and CPU/GPU noise/intensity: lower = max(0, min-5), upper = max+5
-    # - For RAM/VRAM: lower = max(0, min-200), upper = max+200
+    # - For RAM/VRAM: lower = max(0, min-0.5), upper = max+0.5
     # We'll compute these on the fly below.
     for idx, (metric_key, title, ylabel) in enumerate(metrics):
         row = idx // 3
@@ -136,12 +136,16 @@ def create_plots(engine, device, samples):
         ax.set_xticks(iters)
 
         # Apply user-requested axis rules
-        if metric_key in ("render_time_sec", "cpu_time_sec", "cpu_intensity", "cpu_noise_std", "gpu_avg_percent"):
+        if metric_key in ("render_time_sec", "cpu_intensity", "system_overhead_sec", "system_overhead_percent", "gpu_avg_percent"):
             if values:
                 vmin = min(values)
                 vmax = max(values)
-                y_lower = max(0, vmin - 5)
-                y_upper = vmax + 5
+                if metric_key == "system_overhead_percent":
+                    y_lower = max(0, vmin - 15)
+                    y_upper = vmax + 15
+                else:
+                    y_lower = max(0, vmin - 5)
+                    y_upper = vmax + 5
                 ax.set_ylim(y_lower, y_upper)
             else:
                 ax.set_ylim(0, 1)
@@ -155,8 +159,8 @@ def create_plots(engine, device, samples):
             if values:
                 vmin = min(values)
                 vmax = max(values)
-                y_lower = max(0, vmin - 200)
-                y_upper = vmax + 200
+                y_lower = max(0, vmin - 0.5)
+                y_upper = vmax + 0.5
                 ax.set_ylim(y_lower, y_upper)
             else:
                 ax.set_ylim(0, 1)

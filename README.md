@@ -258,9 +258,9 @@ Each file contains metrics:
 - render_engine, device, samples
 - scene name
 - render_time_sec
-- cpu_time_sec
 - cpu_intensity
-- cpu_noise_std
+- system_overhead_sec
+- system_overhead_percent
 - gpu_avg_percent
 - ram_max_mb
 - vram_max_mb
@@ -271,8 +271,8 @@ Each file contains metrics:
 Named as: `{engine}_{device}_{samples}.png`
 
 3x3 grid visualization showing:
-- **Row 1**: Render time, CPU time, CPU intensity
-- **Row 2**: CPU noise, GPU usage, RAM usage
+- **Row 1**: Render time, CPU intensity, System overhead (s)
+- **Row 2**: System overhead (%), GPU usage, RAM usage
 - **Row 3**: VRAM usage, PSNR, SSIM
 
 ### JSON Results
@@ -282,9 +282,9 @@ Named as: `{engine}_{device}_{samples}.png`
 - samples
 - scene
 - render_time_sec
-- cpu_time_sec
 - cpu_intensity
-- cpu_noise_std
+- system_overhead_sec
+- system_overhead_percent
 - gpu_avg_percent
 - ram_max_mb
 - vram_max_mb

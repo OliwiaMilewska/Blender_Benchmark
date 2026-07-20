@@ -8,8 +8,8 @@ cycles_settings:
   device: "CUDA"
   samples: 4
 
-reference: "data/references/ref/cubes_Cycles_CUDA_ref.png"
+reference: "data/references/ref/cubes_Cycles_GPU_ref.png"
 
-repeat: 1
+repeat: 10
 
 wait: 10

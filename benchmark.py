@@ -7,6 +7,7 @@ import csv
 import argparse
 import matplotlib.pyplot as plt
 from datetime import datetime
+import psutil
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
@@ -24,15 +25,32 @@ def ensure_dirs():
 
 
 def resolve_reference_path(scene_path, engine, device="CPU", ref_dir=REF_DIR):
-    """Build path to ground-truth reference image (max quality, _ref suffix)."""
+    """Resolve a reference PNG path for a scene using strict naming conventions.
+
+    Expected names (PNG):
+    - Cycles: {scene}_Cycles_{device}_ref.png or {scene}_Cycles_ref.png
+    - Eevee:  {scene}_Eevee_ref.png or {scene}_Eevee.png
+    Returns full path or None.
+    """
     scene_name = os.path.splitext(os.path.basename(scene_path))[0]
     if engine == "CYCLES":
-        filename = f"{scene_name}_Cycles_{device}_ref.png"
+        candidates = [
+            f"{scene_name}_Cycles_{device}_ref.png",
+            f"{scene_name}_Cycles_ref.png",
+        ]
     elif engine == "BLENDER_EEVEE":
-        filename = f"{scene_name}_Eevee_ref.png"
+        candidates = [
+            f"{scene_name}_Eevee_ref.png",
+            f"{scene_name}_Eevee.png",
+        ]
     else:
         return None
-    return os.path.join(ref_dir, filename)
+
+    for fname in candidates:
+        p = os.path.join(ref_dir, fname)
+        if os.path.isfile(p):
+            return p
+    return None
 
 
 def append_csv(row, engine, device, samples, date_str):
@@ -135,6 +153,14 @@ def _run_benchmark_base(
     # --- Quality metrics ---
     psnr_value = None
     ssim_value = None
+
+    if not reference_image:
+        device_ref = device
+        if(device_ref != "CPU"):
+            device_ref = "GPU"
+
+        reference_image = resolve_reference_path(scene_path, engine, device_ref)
+
     if reference_image:
         if not os.path.isfile(reference_image):
             print(f"Warning: reference image not found: {reference_image}")
@@ -143,6 +169,22 @@ def _run_benchmark_base(
             ssim_value = compute_ssim(rendered_image, reference_image)
 
     # --- Metrics collection ---
+    # Compute cpu_intensity using actual wall-clock render_time (per thesis definition)
+    cpu_time_sec = sys_metrics.get("cpu_time_sec", 0)
+    cpu_intensity = (cpu_time_sec / render_time) if render_time > 0 else 0
+
+    # System overhead (normalized per logical CPU):
+    # Use CPU-seconds per logical CPU: TCPU_per_core = TCPU / cpu_count
+    # Then system_overhead = Treal - TCPU_per_core
+    try:
+        cpu_count = psutil.cpu_count(logical=True) or 1
+    except Exception:
+        cpu_count = 1
+
+    tcpu_per_core = (cpu_time_sec / cpu_count) if cpu_count > 0 else cpu_time_sec
+    system_overhead_sec = max(0.0, render_time - tcpu_per_core)
+    system_overhead_percent = (system_overhead_sec / render_time * 100) if render_time > 0 else 0
+
     results = {
         "iteration": iteration,
         "render_engine": engine,
@@ -150,12 +192,12 @@ def _run_benchmark_base(
         "samples": samples if samples else "default",
         "scene": os.path.basename(scene_path),
         "render_time_sec": round(render_time, 2),
-        "cpu_time_sec": round(sys_metrics["cpu_time_sec"], 2),
-        "cpu_intensity": round(sys_metrics["cpu_intensity"], 2),
-        "cpu_noise_std": round(sys_metrics["cpu_noise_std"], 2),
-        "gpu_avg_percent": round(sys_metrics["gpu_avg_percent"], 2),
-        "ram_max_mb": round(sys_metrics["ram_max_mb"], 2),
+        "cpu_intensity": round(cpu_intensity, 3),
+        "system_overhead_sec": round(system_overhead_sec, 3),
+        "system_overhead_percent": round(system_overhead_percent, 2),
+        "gpu_avg_percent": round(sys_metrics.get("gpu_avg_percent", 0), 2),
         "vram_max_mb": round(vram_max, 2),
+        "ram_max_mb": round(sys_metrics.get("ram_max_mb", 0), 2),
         "psnr": round(psnr_value, 4) if psnr_value is not None else None,
         "ssim": round(ssim_value, 4) if ssim_value is not None else None,
     }
