@@ -1,0 +1,34 @@
+# Lista konfiguracji uruchamianych po kolei przez run_batch.py
+#
+# Uruchomienie:
+#   python run_batch.py --manifest config/batch_example.yaml
+
+configs:
+  - config/C1.yaml
+  - config/C3.yaml
+  - config/C4.yaml
+  - config/C6.yaml
+  - config/C7.yaml
+  - config/C9.yaml
+  - config/C10.yaml
+  - config/C12.yaml
+  - config/C13.yaml
+  - config/C15.yaml
+  - config/C16.yaml
+  - config/C18.yaml
+  - config/E1.yaml
+  - config/E3.yaml
+  - config/E4.yaml
+  - config/E6.yaml
+  - config/E7.yaml
+  - config/E9.yaml
+
+# Opcjonalna przerwa miedzy calymi konfiguracjami (sekundy)
+wait_between_configs: 600
+
+# Czy zatrzymac batch po pierwszym bledzie
+stop_on_error: true
+
+# Opcjonalne nadpisanie parametrow ze wszystkich configow:
+# repeat: 10
+# wait: 300

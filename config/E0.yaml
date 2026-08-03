@@ -10,6 +10,6 @@ eevee_settings:
 
 reference: "data/references/ref/cubes_Eevee_ref.png"
 
-repeat: 2
+repeat: 3
 
-wait: 5
+wait: 10

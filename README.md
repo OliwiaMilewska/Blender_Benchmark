@@ -114,6 +114,17 @@ python benchmarkCli.py --delete-results
 python benchmarkCli.py --create-example-config
 ```
 
+#### Run Batch Configurations
+
+Run multiple YAML benchmark configs in sequence with `run_batch.py`:
+
+```bash
+python run_batch.py config/C1.yaml config/C3.yaml config/C4.yaml
+python run_batch.py --manifest config/batch_example.yaml
+```
+
+`run_batch.py` supports `--glob`, `--repeat`, `--wait`, `--wait-between`, `--continue-on-error`, and `--dry-run`.
+
 #### Create Performance Plots
 
 Generate a 3x3 grid of metric plots from benchmark results:
@@ -144,7 +155,7 @@ cycles_settings:
   samples: 64
 reference: "data/references/ref/lightsaber_Cycles_CPU_64.png"
 repeat: 1
-wait: 600
+wait: 300
 ```
 
 #### For Eevee:
@@ -157,7 +168,7 @@ eevee_settings:
   samples: 64
 reference: "data/references/ref/lightsaber_Eevee_64.png"
 repeat: 1
-wait: 600
+wait: 300
 ```
 
 Then run:
@@ -171,6 +182,7 @@ python benchmarkCli.py --config config/custom.yaml
 Blender_Benchmark/
 ├── benchmark.py                    # Main benchmark script
 ├── benchmarkCli.py                 # CLI entry point
+├── run_batch.py                    # Batch runner for multiple YAML configs
 │
 ├── data/
 │   ├── references/
@@ -222,13 +234,19 @@ python benchmarkCli.py --scene data/references/scene.blend \
   --reference data/references/ref/eevee_original.png
 ```
 
-### Example 3: Batch Testing with CLI
+### Example 3: Batch Testing with run_batch
+```bash
+python run_batch.py config/C1.yaml config/C3.yaml config/C4.yaml
+python run_batch.py --manifest config/batch_example.yaml
+```
+
+### Example 4: Batch Testing with CLI
 ```bash
 python benchmarkCli.py --config config/test_cycles_cpu.yaml --repeat 3
 python benchmarkCli.py --config config/test_eevee.yaml --repeat 3
 ```
 
-### Example 3: Multiple Configurations
+### Example 5: Multiple Configurations
 ```bash
 # Test different configurations
 python benchmarkCli.py --config config/cycles_cpu.yaml
@@ -236,7 +254,7 @@ python benchmarkCli.py --config config/cycles_cuda.yaml
 python benchmarkCli.py --config config/eevee.yaml
 ```
 
-### Example 4: Generate Performance Plots
+### Example 6: Generate Performance Plots
 ```bash
 # Run benchmarks multiple times
 python benchmarkCli.py --scene data/references/scene.blend --engine CYCLES --device CPU --samples 256 --repeat 10

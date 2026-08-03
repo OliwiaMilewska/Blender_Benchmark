@@ -10,6 +10,6 @@ cycles_settings:
 
 reference: "data/references/ref/cubes_Cycles_GPU_ref.png"
 
-repeat: 10
+repeat: 3
 
 wait: 10

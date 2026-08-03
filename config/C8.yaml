@@ -5,11 +5,11 @@ scene: "data/references/lightsaber.blend"
 engine: "CYCLES"
 
 cycles_settings:
-  device: "CPU"
-  samples: 128
+  device: "CUDA"
+  samples: 512
 
-reference: "data/references/ref/lightsaber_Cycles_CPU_ref.png"
+reference: "data/references/ref/lightsaber_Cycles_GPU_ref.png"
 
 repeat: 10
 
-wait: 600
+wait: 300

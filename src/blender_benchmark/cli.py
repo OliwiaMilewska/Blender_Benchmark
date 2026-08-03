@@ -268,7 +268,7 @@ device: "CPU"
 samples: 64
 # reference auto-resolved: data/references/ref/lightsaber_Cycles_CPU_ref.png
 repeat: 1
-wait: 600
+wait: 300
 """
 
     config_dir = Path("config")
@@ -278,6 +278,143 @@ wait: 600
         f.write(example_yaml)
 
     print("✓ Example config file created: config/example.yaml")
+
+
+def parse_config_settings(config):
+    """Extract normalized benchmark settings from a loaded YAML config."""
+    if not config:
+        raise ValueError("Config is empty")
+
+    engine = config.get("engine", "CYCLES")
+    settings = {
+        "blender_path": config.get("blender_path"),
+        "scene": config.get("scene"),
+        "engine": engine,
+        "device": config.get("device", "CPU"),
+        "samples": config.get("samples"),
+        "reference": config.get("reference"),
+        "repeat": config.get("repeat", 1),
+        "wait": config.get("wait", 600),
+        "profile": "MEDIUM",
+    }
+
+    if engine == "CYCLES":
+        cycles = config.get("cycles_settings", {})
+        settings["device"] = cycles.get("device", settings["device"])
+        settings["samples"] = cycles.get("samples", settings["samples"] or 64)
+    elif engine == "BLENDER_EEVEE":
+        eevee = config.get("eevee_settings", {})
+        settings["profile"] = eevee.get("profile", "LOW")
+        settings["samples"] = eevee.get("samples", settings["samples"] or 64)
+
+    return settings
+
+
+def run_config_file(config_file, repeat_override=None, wait_override=None):
+    """
+    Run a single benchmark from a YAML config file.
+
+    Returns True on success, False on failure.
+    """
+    config = load_config(config_file)
+    if not config:
+        return False
+
+    try:
+        settings = parse_config_settings(config)
+    except ValueError as e:
+        print(f"❌ {e}")
+        return False
+
+    if repeat_override is not None:
+        settings["repeat"] = repeat_override
+    if wait_override is not None:
+        settings["wait"] = wait_override
+
+    if not settings["scene"]:
+        print("❌ Config is missing required field: scene")
+        return False
+
+    _sys.path.insert(0, os.path.dirname(__file__))
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    _sys.path.insert(0, root_dir)
+
+    try:
+        from benchmark import run_cycles_benchmark, run_eevee_benchmark, resolve_reference_path
+    except ImportError as e:
+        print(f"❌ Error importing benchmark functions: {e}")
+        print("Make sure benchmark.py exists in the root directory")
+        return False
+
+    reference = settings["reference"]
+    if not reference:
+        ref_device = settings["device"]
+        if settings["engine"] == "BLENDER_EEVEE":
+            ref_device = "GPU"
+        reference = resolve_reference_path(settings["scene"], settings["engine"], ref_device)
+        print(f"Reference (auto): {reference}")
+
+    iteration_plan = build_iteration_plan(settings["repeat"])
+    print(
+        f"\n🔄 Running benchmark {settings['repeat']} time(s), "
+        f"with the first run treated as warmup...\n"
+    )
+
+    measurement_iteration = 0
+    for index, stage in enumerate(iteration_plan, start=1):
+        if len(iteration_plan) > 1:
+            print(f"\n{'='*60}")
+            print(f"{stage.capitalize()} run {index}/{len(iteration_plan)}")
+            print(f"{'='*60}\n")
+
+        if stage == "warmup":
+            print("🔥 Warmup run: this iteration will not be included in the reported measurements.")
+            iteration_value = 0
+            store_results = False
+        else:
+            measurement_iteration += 1
+            iteration_value = measurement_iteration
+            store_results = True
+            print("📏 Measurement run: this iteration will be included in the reported results.")
+
+        try:
+            if settings["engine"] == "CYCLES":
+                run_cycles_benchmark(
+                    blender_path=settings["blender_path"],
+                    scene_path=settings["scene"],
+                    device=settings["device"],
+                    samples=settings["samples"],
+                    reference_image=reference,
+                    iteration=iteration_value,
+                    store_results=store_results,
+                )
+            elif settings["engine"] == "BLENDER_EEVEE":
+                run_eevee_benchmark(
+                    blender_path=settings["blender_path"],
+                    scene_path=settings["scene"],
+                    samples=settings["samples"],
+                    reference_image=reference,
+                    iteration=iteration_value,
+                    store_results=store_results,
+                    profile=settings["profile"],
+                )
+        except Exception as e:
+            print(f"❌ Benchmark failed: {e}")
+            return False
+
+        if len(iteration_plan) > 1 and index < len(iteration_plan):
+            wait_seconds = max(0, settings["wait"])
+            print(f"⏳ Waiting {wait_seconds} seconds before next iteration...")
+            for _ in tqdm(range(wait_seconds), desc="Idle time", unit="s", leave=False):
+                time.sleep(1)
+
+    if len(iteration_plan) > 1:
+        print(
+            f"\n✓ All {len(iteration_plan)} runs completed, "
+            "with the warmup excluded from measurements."
+        )
+
+    return True
 
 
 def main():
@@ -384,31 +521,11 @@ Examples:
         delete_results()
         return
 
-    # Load config if provided
     if args.config:
-        try:
-            config = load_config(args.config)
-            args.blender_path = config.get("blender_path", args.blender_path)
-            args.scene = config.get("scene", args.scene)
-            args.engine = config.get("engine", args.engine)
-            args.device = config.get("device", args.device)
-            args.samples = config.get("samples", args.samples)
-            args.reference = config.get("reference", args.reference)
-            args.repeat = config.get("repeat", args.repeat)
-            args.wait = config.get("wait", args.wait)
-
-            # Override with engine-specific settings
-            if args.engine == "CYCLES":
-                args.device = config.get('cycles_settings', {}).get('device', "CPU")
-                args.samples = config.get('cycles_settings', {}).get('samples', 64)
-
-            if args.engine == "BLENDER_EEVEE":
-                args.profile = config.get('eevee_settings', {}).get('profile', "LOW")
-                args.samples = config.get('eevee_settings', {}).get('samples', 64)
-
-        except ImportError as e:
-            print(f"❌ Error reading config file: {e}")
-            return
+        repeat_override = args.repeat if args.repeat != 1 else None
+        wait_override = args.wait if args.wait != 600 else None
+        run_config_file(args.config, repeat_override=repeat_override, wait_override=wait_override)
+        return
 
     _sys.path.insert(0, os.path.dirname(__file__))
     root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -421,16 +538,20 @@ Examples:
         print("Make sure benchmark.py exists in the root directory")
         return
 
-    if args.scene and not args.reference:
+    if not args.scene:
+        print("❌ Error: --scene is required when not using --config")
+        return
+
+    if not args.reference:
         ref_device = args.device
         if args.engine == "BLENDER_EEVEE":
             ref_device = "GPU"
         args.reference = resolve_reference_path(args.scene, args.engine, ref_device)
         print(f"Reference (auto): {args.reference}")
 
+    profile = getattr(args, "profile", "MEDIUM")
     iteration_plan = build_iteration_plan(args.repeat)
 
-    # Run benchmark with repeat option
     print(f"\n🔄 Running benchmark {args.repeat} time(s), with the first run treated as warmup...\n")
 
     measurement_iteration = 0
@@ -468,7 +589,7 @@ Examples:
                 reference_image=args.reference,
                 iteration=iteration_value,
                 store_results=store_results,
-                profile=args.profile
+                profile=profile
             )
 
         if len(iteration_plan) > 1 and index < len(iteration_plan):

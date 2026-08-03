@@ -6,10 +6,10 @@ engine: "CYCLES"
 
 cycles_settings:
   device: "CUDA"
-  samples: 32
+  samples: 512
 
 reference: "data/references/ref/cubes_Cycles_GPU_ref.png"
 
 repeat: 10
 
-wait: 600
+wait: 300

@@ -1,15 +1,15 @@
 blender_path: "/home/oliwialinux/Documents/blender-5.1.2-linux-x64/blender"
 
-scene: "data/references/lightsaber.blend"
+scene: "data/references/bakery.blend"
 
 engine: "CYCLES"
 
 cycles_settings:
   device: "CUDA"
-  samples: 128
+  samples: 32
 
-reference: "data/references/ref/lightsaber_Cycles_GPU_ref.png"
+reference: "data/references/ref/bakery_Cycles_GPU_ref.png"
 
 repeat: 10
 
-wait: 600
+wait: 300
