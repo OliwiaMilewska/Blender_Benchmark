@@ -2,6 +2,7 @@
 Command-line interface for blender_benchmark.
 """
 import argparse
+import csv
 import os
 import shutil
 import time
@@ -21,23 +22,15 @@ def build_iteration_plan(repeat=1):
     return ["warmup"] + ["measurement"] * repeat
 
 
-def create_plots(engine, device, samples):
+def create_plots(engine, device, samples, results_source=None):
     """
-    Create a 3x3 grid of metric plots from JSON result files.
+    Create a 3x3 grid of metric plots from JSON result files or a CSV result file.
     Saves to output/plots/{engine}_{device}_{samples}.png
     """
-    results_dir = Path("output/results")
+    default_results_dir = Path("output/results")
     plots_dir = Path("output/plots")
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    pattern = f"*_{engine}_{device}_{samples}_*.json"
-    json_files = sorted(results_dir.glob(pattern))
-
-    if not json_files:
-        print(f"❌ No JSON files found for {engine}_{device}_{samples}")
-        return
-
-    # Prepare containers
     data = {
         "iteration": [],
         "render_time_sec": [],
@@ -51,35 +44,85 @@ def create_plots(engine, device, samples):
         "ssim": []
     }
 
-    for json_file in json_files:
-        try:
-            text = json_file.read_text().strip()
-            result = json.loads(text)
-            clean = {k.strip(): v for k, v in result.items()}
+    results_path = Path(results_source) if results_source else default_results_dir
+    csv_files = []
+    json_files = []
+    scene_name = ""
 
-            data["iteration"].append(int(clean["iteration"]))
-            data["render_time_sec"].append(float(clean.get("render_time_sec", 0)))
-            data["cpu_intensity"].append(float(clean.get("cpu_intensity", 0)))
-            data["system_overhead_sec"].append(float(clean.get("system_overhead_sec", 0)))
-            data["system_overhead_percent"].append(float(clean.get("system_overhead_percent", 0)))
-            data["gpu_avg_percent"].append(float(clean.get("gpu_avg_percent", 0)))
-            data["ram_max_mb"].append(float(clean.get("ram_max_mb", 0)))
-            data["vram_max_mb"].append(float(clean.get("vram_max_mb", 0)))
-            psnr = clean.get("psnr")
-            data["psnr"].append(float(psnr) if psnr is not None else 0)
-            ssim = clean.get("ssim")
-            data["ssim"].append(float(ssim) if ssim is not None else 0)
+    if not results_path.exists():
+        print(f"❌ Results path not found: {results_path}")
+        return
+
+    if results_path.is_file():
+        suffix = results_path.suffix.lower()
+        if suffix == ".csv":
+            csv_files = [results_path]
+        elif suffix == ".json":
+            json_files = [results_path]
+        else:
+            print(f"❌ Unsupported results file type: {results_path}")
+            return
+    else:
+        csv_pattern = f"*_{engine}_{device}_{samples}.csv"
+        json_pattern = f"*_{engine}_{device}_{samples}_*.json"
+        csv_files = sorted(results_path.glob(csv_pattern))
+        if not csv_files:
+            json_files = sorted(results_path.glob(json_pattern))
+            if not json_files:
+                print(f"❌ No CSV or JSON files found for {engine}_{device}_{samples} in {results_path}")
+                return
+
+    if csv_files:
+        try:
+            for csv_file in csv_files:
+                with open(csv_file, "r", newline="", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        data["iteration"].append(int(row.get("iteration", 0)))
+                        data["render_time_sec"].append(float(row.get("render_time_sec", 0)))
+                        data["cpu_intensity"].append(float(row.get("cpu_intensity", 0)))
+                        data["system_overhead_sec"].append(float(row.get("system_overhead_sec", 0)))
+                        data["system_overhead_percent"].append(float(row.get("system_overhead_percent", 0)))
+                        data["gpu_avg_percent"].append(float(row.get("gpu_avg_percent", 0)))
+                        data["ram_max_mb"].append(float(row.get("ram_max_mb", 0)))
+                        data["vram_max_mb"].append(float(row.get("vram_max_mb", 0)))
+                        data["psnr"].append(float(row.get("psnr", 0)) if row.get("psnr") not in (None, "") else 0)
+                        data["ssim"].append(float(row.get("ssim", 0)) if row.get("ssim") not in (None, "") else 0)
         except Exception as e:
-            print(f"⚠️  Error reading {json_file}: {e}")
-            continue
+            print(f"⚠️  Error reading CSV file: {e}")
+            return
+    else:
+        for json_file in json_files:
+            try:
+                text = json_file.read_text().strip()
+                result = json.loads(text)
+                clean = {k.strip(): v for k, v in result.items()}
+                scene_name = clean.get("scene", scene_name) or scene_name
+
+                data["iteration"].append(int(clean["iteration"]))
+                data["render_time_sec"].append(float(clean.get("render_time_sec", 0)))
+                data["cpu_intensity"].append(float(clean.get("cpu_intensity", 0)))
+                data["system_overhead_sec"].append(float(clean.get("system_overhead_sec", 0)))
+                data["system_overhead_percent"].append(float(clean.get("system_overhead_percent", 0)))
+                data["gpu_avg_percent"].append(float(clean.get("gpu_avg_percent", 0)))
+                data["ram_max_mb"].append(float(clean.get("ram_max_mb", 0)))
+                data["vram_max_mb"].append(float(clean.get("vram_max_mb", 0)))
+                psnr = clean.get("psnr")
+                data["psnr"].append(float(psnr) if psnr is not None else 0)
+                ssim = clean.get("ssim")
+                data["ssim"].append(float(ssim) if ssim is not None else 0)
+            except Exception as e:
+                print(f"⚠️  Error reading {json_file}: {e}")
+                continue
 
     if not data["iteration"]:
-        print(f"❌ Could not read any valid data from JSON files")
+        source_type = "CSV" if csv_files else "JSON"
+        print(f"❌ Could not read any valid data from {source_type} files")
         return
 
     # Create 3x3 grid of plots
     fig = plt.figure(figsize=(15, 12))
-    fig.suptitle(f"{engine}-{device}-{samples} samples-{clean.get('scene', 0)}", fontsize=16, fontweight="bold")
+    fig.suptitle(f"{engine}-{device}-{samples} samples - {scene_name}", fontsize=16, fontweight="bold")
     gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.3, wspace=0.3)
 
     metrics = [
@@ -450,6 +493,9 @@ Examples:
                         action="store_true",
                         help="Create plots from benchmark results")
 
+    parser.add_argument("--results-file",
+                        help="Path to a results CSV file or a directory containing JSON result files")
+
     # Benchmark parameters
     parser.add_argument("--blender-path", 
                         default="/home/intel/Blender/blender-5.0.0-linux-x64/blender",
@@ -506,9 +552,9 @@ Examples:
             print("❌ Error: --plot requires --engine, --device, and --samples")
             print("Example: python benchmarkCli.py --plot --engine CYCLES --device CPU --samples 64")
             return
-        if(args.engine == "BLENDER_EEVEE"):
+        if args.engine == "BLENDER_EEVEE":
             args.device = "GPU"
-        create_plots(args.engine, args.device, args.samples)
+        create_plots(args.engine, args.device, args.samples, results_source=args.results_file)
         return
 
     # Handle --create-example-config
@@ -611,6 +657,7 @@ def print_commands():
             ("--create-example-config", "Create example configuration files"),
             ("--delete-results", "Delete old results, plots, and renders"),
             ("--plot", "Create 3x3 metric plots from benchmark results*"),
+            ("--results-file FILE", "Path to a CSV file or JSON results directory for plot creation"),
         ],
         "BENCHMARK PARAMETERS": [
             ("--scene FILE", "Path to .blend file (REQUIRED)"),
